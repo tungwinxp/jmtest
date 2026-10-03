@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JMFS in the browser</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Jump Motif Finder Search</p>
+        <h1>Search a 3D motif without uploading the structures</h1>
+        <p class="lede">The index stays on this computer or your chosen host. WebGPU screens local fits; the shared JMFS exact core verifies the complete motif.</p>
+      </div>
+      <div class="hardware" id="hardware"><span class="signal"></span> Detecting browser GPU when search starts</div>
+    </header>
+
+    <section class="method" aria-label="JMFS search workflow">
+      <div><b>1</b><span>Read bounded index ranges</span></div>
+      <i>→</i>
+      <div><b>2</b><span>Fit each motif piece locally</span></div>
+      <i>→</i>
+      <div><b>3</b><span>Join pieces in their 3D arrangement</span></div>
+      <i>→</i>
+      <div><b>4</b><span>Verify the complete motif exactly</span></div>
+    </section>
+
+    <form id="search-form">
+      <section class="card">
+        <div class="section-heading"><span>Index</span><small>Current JMFSGEOM v5</small></div>
+        <div class="source-grid">
+          <label class="file-drop">Local <code>.jmfsgeom</code>
+            <input id="index-file" type="file" accept=".jmfsgeom,application/octet-stream">
+            <span id="index-file-name">Choose an index file</span>
+          </label>
+          <label>or HTTPS URL with byte-range support
+            <input id="index-url" type="url" placeholder="https://…/afdb_swissprot_v4.jmfsgeom">
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading"><span>Optional remote accelerator</span><small>FoldDisco prefilter (FDP)</small></div>
+        <label class="inline-check"><input id="fdp-enabled" type="checkbox"> Screen a discontinuous protein motif against a release-matched remote FDP index first</label>
+        <div class="source-grid optional-fields" id="fdp-fields" hidden>
+          <label>Remote <code>.jmfsremote</code> catalog
+            <input id="fdp-catalog-url" type="url" placeholder="https://…/afdb_swissprot_v4.jmfsremote">
+          </label>
+          <label>Postings URL override <span class="optional">optional</span>
+            <input id="fdp-postings-url" type="url" placeholder="Usually read from the catalog">
+          </label>
+        </div>
+        <p class="note">For the Swiss-Prot example, pair <code>afdb_swissprot_v4.jmfsgeom</code> with a catalog built from the same target order. FDP only chooses proteins to inspect; JMFS still performs the full exact motif search.</p>
+      </section>
+
+      <section class="card">
+        <div class="section-heading"><span>Query structure</span><small>Protein Cα or nucleotide C4′ anchors</small></div>
+        <label class="compact-file">PDB file <input id="query-file" type="file" accept=".pdb,.ent,text/plain"></label>
+        <label>or paste PDB coordinates
+          <textarea id="query-pdb" rows="7" spellcheck="false" placeholder="ATOM …"></textarea>
+        </label>
+        <button class="text-button" id="load-example" type="button">Load the tracked Swiss-Prot serine-protease query</button>
+      </section>
+
+      <section class="card settings">
+        <div class="section-heading"><span>Motif</span><small>Comma-separated pieces; ranges stay locally continuous</small></div>
+        <label>Motif pieces
+          <input id="motif" required value="B56-58,B101-103,C194-196" placeholder="B56-58,B101-103,C194-196">
+        </label>
+        <div class="three-columns">
+          <label>Chemistry
+            <select id="chemistry-mode">
+              <option value="none">Shape only</option>
+              <option value="exact" selected>Exact residue/base</option>
+              <option value="reduced">Related chemistry</option>
+            </select>
+          </label>
+          <label>Chemistry positions
+            <input id="chemistry" value="B57,B102,C195" placeholder="B57,B102,C195">
+          </label>
+          <label>RMSD cutoff (Å)
+            <input id="rmsd" type="number" min="0.001" step="0.1" value="1.0">
+          </label>
+        </div>
+        <div class="three-columns">
+          <label>Compute
+            <select id="backend">
+              <option value="auto" selected>Auto: WebGPU, then WASM</option>
+              <option value="webgpu">Require WebGPU</option>
+              <option value="wasm">WASM CPU</option>
+            </select>
+          </label>
+          <label>Maximum hits
+            <input id="match-limit" type="number" min="1" max="100000" value="5000">
+          </label>
+          <label class="check"><input id="large-cpu" type="checkbox"> Allow large CPU fallback</label>
+        </div>
+        <p class="note">On a compatible Mac, the browser implements WebGPU with Metal. Candidate screening may use GPU floating point; every reported hit passes the shared Rust FP64 fit.</p>
+        <label>Structural search
+          <select id="approx-mode">
+            <option value="off" selected>Non-approximate</option>
+            <option value="auto">Approximate: auto</option>
+            <option value="single">Approximate: single segment</option>
+            <option value="spacing">Approximate: local spacing</option>
+            <option value="anchor">Approximate: anchor</option>
+          </select>
+        </label>
+        <p class="note">Approximation may reduce recall. Chemistry and the FP64 acceptance cutoff remain unchanged. Ineligible plans use non-approximate search and report the reason.</p>
+      </section>
+
+      <div class="actions">
+        <button class="primary" id="run" type="submit">Search motif</button>
+        <button id="cancel" type="button" disabled>Stop (keep progress)</button>
+        <button id="discard" type="button" disabled>Discard saved run</button>
+        <button id="download" type="button" disabled>Download TSV</button>
+      </div>
+      <p class="background-note">You may switch tabs while a search runs. Keep this tab open for continuous GPU work; closing it stops computation after the last saved chunk, and submitting the same inputs later resumes it.</p>
+    </form>
+
+    <section class="run-card" aria-live="polite">
+      <div class="run-head"><strong id="status">Ready</strong><span id="run-summary"></span></div>
+      <progress id="progress" max="1" value="0"></progress>
+      <p id="detail">Choose an index and query to begin. Completed chunks are saved locally so the same search can resume after closing the page.</p>
+    </section>
+
+    <section class="results" id="results" hidden>
+      <div class="section-heading"><span>Hits</span><small id="result-count"></small></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Target</th><th>Target offsets (1-based)</th><th>Matched sequence</th><th>RMSD (Å)</th></tr></thead>
+          <tbody id="result-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./app.js?v=19"></script>
+</body>
+</html>

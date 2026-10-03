@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JMFS motif search</title>
+</head>
+<body>
+  <p id="boot" style="font:14px Arial,sans-serif;padding:16px">Loading the JMFS interface…</p>
+  <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
+       exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
+  <script type="module">
+    import { createTransport } from "./colab_transport.js?v=19";
+
+    const text = async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${url} (${response.status})`);
+      return response.text();
+    };
+    try {
+      const [template, sceneJs, pdb] = await Promise.all([
+        text("../../colab/app.html"),
+        text("../../colab/scene.js"),
+        text("../../jmfs/fixtures/protein/serine_three_segment.pdb"),
+      ]);
+      window.jmfsTransport = createTransport({
+        workerUrl: new URL("./search_worker.js?v=19", import.meta.url),
+        wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=19", import.meta.url),
+        demoIndexUrl: new URL("./assets/demo.jmfsgeom", import.meta.url).href,
+        // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
+        cpuLanes: Number(new URLSearchParams(location.search).get("cpuLanes")),
+      });
+      const config = {
+        pdb,
+        transport: "jmfsTransport",
+        indexFile: true,
+        subtitle: await navigator.gpu?.requestAdapter().catch(() => null)
+          ? "This browser · searches run on this computer's GPU through WebGPU"
+          : "This browser · no WebGPU adapter, so searches run on this computer's CPU",
+        indexLabel: "Target database on this computer or the web",
+        indexPlaceholder: "Leave empty for the small example database, or enter an https .jmfsgeom URL",
+        indexHint: "Choose a .jmfsgeom file from this computer, or enter the URL of one served with byte ranges. "
+          + "The file is read in place; nothing is uploaded. Public Folddisco databases are not JMFS indexes.",
+        ready: "Search the example database, or choose your own target index.",
+      };
+      const html = template
+        .replace("__JMFS_CONFIG__", () => JSON.stringify(config).replaceAll("<", "\\u003c"))
+        .replace("__JMFS_SCENE_JS__", () => sceneJs);
+      const parsed = new DOMParser().parseFromString(html, "text/html");
+      const scripts = [...parsed.querySelectorAll("script")];
+      // Parsed scripts never run; re-create each one in document order after its markup exists.
+      for (const script of scripts) script.replaceWith(parsed.createComment("script"));
+      document.head.append(...parsed.head.childNodes);
+      document.body.replaceChildren(...parsed.body.childNodes);
+      for (const source of scripts) {
+        const script = document.createElement("script");
+        for (const { name, value } of source.attributes) script.setAttribute(name, value);
+        script.textContent = source.textContent;
+        const loaded = source.src
+          ? new Promise((resolve, reject) => { script.onload = resolve; script.onerror = reject; })
+          : null;
+        document.body.append(script);
+        await loaded?.catch(() => {});
+      }
+    } catch (error) {
+      document.getElementById("boot").textContent = `The JMFS interface could not start: ${error.message}`;
+    }
+  </script>
+</body>
+</html>
