@@ -32,14 +32,15 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     if(!sequenceChains.has(a.chain))sequenceChains.set(a.chain,[]);
     sequenceChains.get(a.chain).push(a);
   }
-  let hoverLabel=null;
+  // The hover note is an HTML box kept inside the viewer, so long text wraps instead of running off it.
+  let tip=null;
   function clearHover(){
-    if(hoverLabel){viewer.removeLabel(hoverLabel);hoverLabel=null;}
+    if(tip)tip.hidden=true;
   }
   viewer.setHoverDuration(180);
-  viewer.setHoverable({},true,function(atom){
+  viewer.setHoverable({},true,function(atom,_viewer,event,container){
     clearHover();
-    if(!visible(atom))return;
+    if(!visible(atom)||!container)return;
     const a=atom.jmfsOrigin||atom;
     const role=a.chain.startsWith('query_')?'Query':'Target';
     const location=isMatch(a)?(role==='Query'?'motif position ':'exported position ')+a.resi:
@@ -48,11 +49,25 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     const index=chain.findIndex(b=>b.resi===a.resi&&(b.icode||'')===(a.icode||''));
     const nearby=index<0?'':chain.slice(Math.max(0,index-4),index+5)
       .map(b=>b===chain[index]?'['+one(b)+']':one(b)).join('');
-    hoverLabel=viewer.addLabel(role+' · '+a.resn+' ('+one(a)+') · '+location+'\n'+nearby,
-      {position:atom,backgroundColor:'white',backgroundOpacity:.95,fontColor:'#243247',fontSize:12,
-       borderColor:'#dce2e9',borderThickness:1,inFront:true});
-    viewer.render();
-  },function(){clearHover();viewer.render();});
+    // One note per viewer, shared by every scene installed on it.
+    tip||=container.querySelector('.jmfs-hover');
+    if(!tip){
+      tip=container.ownerDocument.createElement('div');
+      tip.className='jmfs-hover';
+      tip.style.cssText='position:absolute;z-index:10;box-sizing:border-box;width:max-content;max-width:calc(100% - 8px);'+
+        'padding:4px 8px;border:1px solid #dce2e9;border-radius:6px;background:rgba(255,255,255,.95);color:#243247;'+
+        'font:12px/1.4 system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none';
+      container.appendChild(tip);
+    }
+    tip.textContent=role+' · '+a.resn+' ('+one(a)+') · '+location+'\n'+nearby;
+    tip.hidden=false;
+    // Beside the pointer, moved back inside the viewer where it would cross an edge.
+    const box=container.getBoundingClientRect();
+    const x=event&&event.clientX!=null?event.clientX-box.left:box.width/2;
+    const y=event&&event.clientY!=null?event.clientY-box.top:box.height/2;
+    tip.style.left=Math.max(4,Math.min(x+12,box.width-tip.offsetWidth-4))+'px';
+    tip.style.top=Math.max(4,Math.min(y+12,box.height-tip.offsetHeight-4))+'px';
+  },clearHover);
   viewer.jmfsVisibility=function(chains,query=true,target=true,motif=false){
     clearHover();
     enabled=new Set(chains);showQuery=query;showTarget=target;motifOnly=motif;

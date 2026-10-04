@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>JMFS structure search</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
 </head>
 <body>
   <p id="boot" style="font:13px system-ui,sans-serif;padding:16px">Loading the JMFS interface…</p>
@@ -54,8 +55,8 @@
     };
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=20"),
-        text("../../colab/scene.js?v=20"),
+        text("../../colab/app.html?v=21"),
+        text("../../colab/scene.js?v=21"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
@@ -68,6 +69,8 @@
       });
       const config = {
         layout: "workbench",
+        logo: here("./assets/logo.svg"),
+        annotate: true,
         transport: "jmfsTransport",
         queries,
         query: 2,
@@ -77,13 +80,13 @@
         ],
         indexFile: true,
         subtitle: await navigator.gpu?.requestAdapter().catch(() => null)
-          ? "Searches run in this browser on this computer's GPU"
-          : "No WebGPU adapter · searches run in this browser on this computer's CPU",
+          ? "Runs in this browser, on this computer's GPU"
+          : "Runs in this browser, on this computer's CPU (no WebGPU)",
         indexLabel: "Address of a .jmfsgeom file served with byte ranges",
         indexPlaceholder: "https://…/database.jmfsgeom",
         indexHint: catalog.some((database) => !database.url)
-          ? "Get file downloads a database from Google Drive; add the saved file here. "
-            + "Files are read in place and nothing is uploaded."
+          ? "Get file downloads from Google Drive; add the saved file here. "
+            + "Files are read in place; nothing is uploaded."
           : "Files are read in place and nothing is uploaded.",
         ready: "Ready.",
       };

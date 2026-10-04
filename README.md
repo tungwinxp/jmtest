@@ -15,6 +15,9 @@ Colab notebook; here the search runs on your own computer, in the browser.
 - With a WebGPU adapter the search runs on the GPU (Metal on a Mac) and up to
   two databases stay loaded for the next search. Without one, or with **CPU**
   selected, it runs on WebAssembly CPU workers.
+- Hits are named with their gene symbol, protein name and organism. For this
+  the page sends the hits' UniProt accessions to UniProt after a search; it is
+  the only request the page makes about a search.
 - Selecting a hit superposes it on the query; results and structures download
   as TSV and mmCIF.
 

@@ -19,7 +19,7 @@ button:hover,.button:hover{border-color:var(--outline);background:var(--wash)}bu
 .button{position:relative}.button input{position:absolute;width:1px;height:1px;opacity:0}
 .key{width:100%;height:36px;border-color:var(--primary);background:var(--primary);color:#fff;font:600 13px/1 var(--sans)}.key:hover{border-color:var(--primary-hover);background:var(--primary-hover)}
 .seg{display:inline-flex}.seg button{margin-left:-1px;border-radius:0}.seg button:first-child{margin-left:0;border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button[aria-pressed=true]{background:var(--wash);color:var(--primary)}
-.app{max-width:1120px;margin:0 auto;padding:16px}header{padding-bottom:16px}
+.app{max-width:1120px;margin:0 auto;padding:16px}header{display:flex;gap:12px;align-items:center;padding-bottom:16px}#logo{height:40px}
 .group{padding:16px 0;border-top:1px solid var(--hairline)}.field{margin-top:12px}
 .bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}.pair{display:flex;gap:8px;align-items:center}.pair select{flex:1;min-width:0}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.chem{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px}.query{display:grid;gap:16px}.query>*{min-width:0}#querySlot:empty{display:none}
@@ -31,13 +31,14 @@ details{margin-top:12px}summary{cursor:pointer}details>*+*{margin-top:8px}detail
 .status{min-height:18px;margin-top:8px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--error)}
 figure,figcaption{display:flex;flex-direction:column;gap:8px;min-width:0}.caption{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
 .viewer{position:relative;height:340px;overflow:hidden;border:1px solid var(--hairline);border-radius:8px;background:var(--surface)}#resultViewer{height:min(62vh,640px);min-height:420px}
+dl,dd{margin:0}dl>div{display:flex;gap:6px;align-items:baseline}dd{color:var(--ink);font:12px/1.5 var(--mono);font-feature-settings:"tnum" 1}#sceneStatus{color:var(--ink);font-weight:600}
 .dot{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:9999px}label .dot{margin:0}
 .toggles{display:flex;flex-wrap:wrap;gap:4px 12px}.toggles label{display:inline-flex;gap:5px;align-items:center;margin:0;color:var(--ink)}
 .hits .bar{justify-content:space-between;margin-bottom:12px}.scroll{max-height:391px;overflow-y:auto;overflow-x:hidden}
 table{width:100%;table-layout:fixed;border-collapse:collapse}th,td{height:30px;padding:0 8px;overflow:hidden;border-bottom:1px solid var(--hairline);text-align:left;text-overflow:ellipsis;white-space:nowrap}
 th{position:sticky;top:0;background:var(--dim);color:var(--muted);font-size:12px;font-weight:400}th.rank{width:40px}th.database{width:30%}th.residues{width:34%}th.rmsd{width:60px}.num{text-align:right}
 tbody tr{cursor:pointer}tbody tr:hover{background:var(--dim)}tbody tr.active{background:var(--wash)}
-td button{display:block;width:100%;height:29px;padding:0;overflow:hidden;border:0;border-radius:0;background:none;font:inherit;text-align:left;text-overflow:ellipsis}td button:hover{background:none}
+td button{display:block;width:100%;height:29px;padding:0;overflow:hidden;border:0;border-radius:0;background:none;font:inherit;text-align:left;text-overflow:ellipsis}td button:hover{background:none}.about{display:block;margin:-5px 0 6px;overflow:hidden;color:var(--muted);font:12px/1.35 var(--sans);text-overflow:ellipsis}#about{color:var(--ink)}#about:empty{display:none}
 pre{max-height:240px;margin:0;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
 .stage{display:flex;flex-direction:column;gap:8px}.stage:not(:has(>#scenePanel:not([hidden]),>#queryFigure)){display:none}body:not(.bench) #view{display:none}#sceneTools{display:contents}#downloadScene{margin-left:auto}
 .credit{padding-top:16px;border-top:1px solid var(--hairline)}
@@ -57,7 +58,7 @@ body.bench{height:100dvh;overflow:hidden}
 </style></head><body>
 <div class="app">
 <section class="panel" aria-label="Search settings">
-<header><h1>JMFS structure search</h1><p class="hint" id="subtitle">Google Colab · searches run in your runtime</p></header>
+<header><img id="logo" alt="" hidden><div><h1>JMFS structure search</h1><p class="hint" id="subtitle">Google Colab · searches run in your runtime</p></div></header>
 <section class="group"><h2>Query</h2><div class="query"><div>
 <div class="pair"><select id="source" aria-label="Query structure"></select><label class="button" for="upload">Upload PDB<input type="file" id="upload" accept=".pdb,.ent,text/plain"></label></div>
 <div class="field"><label for="motif">Motif residues</label><input id="motif" class="data" type="text" spellcheck="false" placeholder="A10-12,A45-47,A80-82" title="Chain IDs and PDB residue numbers. Commas separate blocks; a range includes every residue between its ends."></div>
@@ -85,7 +86,8 @@ body.bench{height:100dvh;overflow:hidden}
 <div id="sceneTools" class="bar" hidden><div class="seg"><button id="focus">Focus motif</button><button id="wholeQuery">Whole query</button><button id="whole">Whole target</button></div>
 <button id="downloadScene">Download structure</button></div></div>
 <figure id="scenePanel" hidden><div id="resultViewer" class="viewer" aria-label="Query and target motif superposition"></div>
-<figcaption><div class="caption"><span id="sceneStatus" class="data" role="status" aria-live="polite"></span><a id="targetInfo" target="_blank" rel="noopener noreferrer" hidden>UniProt entry</a></div>
+<figcaption><div class="caption"><strong id="sceneStatus" class="data" role="status" aria-live="polite"></strong><a id="targetInfo" target="_blank" rel="noopener noreferrer" hidden>UniProt entry</a></div>
+<div id="about"></div><dl id="facts" class="caption"></dl>
 <div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" style="background:#0072b2"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
 <div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" style="background:#d55e00"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
 <div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" style="background:#000"></i>matched query</span><span><i class="dot" style="background:#e69f00"></i>matched target</span></div>
@@ -106,7 +108,7 @@ const queries=cfg.queries||[{label:'Serine protease motif',pdb:cfg.pdb,motif:'B5
 // must first be saved by the user and added as a file.
 const databases=(cfg.databases||[]).map(db=>({...db}));
 const sourceNames=new Map();
-let queryViewer,resultViewer,rows=[],download='',scene=null,busy=false;
+let queryViewer,resultViewer,rows=[],download='',scene=null,shown=null,busy=false;
 let previewChains=new Set(),sceneChains=new Set();
 const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
 const status=(text,error=false)=>{$('status').textContent=text;$('status').className='status'+(error?' error':'');};
@@ -226,6 +228,8 @@ function uniprot(target){
   if(model&&valid.test(model[1]))return model[1];
   return (text.match(/(?<![A-Z0-9])[A-Z0-9]{6,10}(?![A-Z0-9])/g)||[]).find(token=>valid.test(token));
 }
+// Target IDs often carry the name of the structure file they were indexed from.
+const targetName=row=>String(row.target_id).replace(/\.(pdb|cif|mmcif|ent)(\.gz)?$/i,'');
 const databaseName=row=>sourceNames.get(row.source_index)||String(row.source_index||'').split(/[\\/]/).pop();
 function resize(){for(const [viewer,id] of [[queryViewer,'queryViewer'],[resultViewer,'resultViewer']])if(viewer&&$(id).offsetWidth)viewer.resize();}
 // The workbench shows one figure at a time; the sheet shows both where they belong.
@@ -252,7 +256,7 @@ async function showScene(i){
   if(busy)return;busy=true;$('search').disabled=true;
   try{
     $('scenePanel').hidden=$('sceneTools').hidden=$('view').hidden=false;view(true);
-    $('sceneStatus').textContent='Loading structure…';$('targetInfo').hidden=true;
+    $('sceneStatus').textContent='Loading structure…';$('sceneStatus').title='';$('targetInfo').hidden=true;$('about').textContent='';$('facts').replaceChildren();
     const data=await call('scene',{row:i});
     if(data.error)throw Error(data.error);
     scene=data;
@@ -260,23 +264,56 @@ async function showScene(i){
     resultViewer.removeAllModels();resultViewer.addModel(data.cif,'cif',{doAssembly:false,hbondCutoff:0});
     prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();resultViewer.resize();frameScene('',true);
     const row=rows[i],accession=uniprot(row.target_id);
-    $('sceneStatus').textContent=[row.target_id,'RMSD '+Number(row.rmsd).toFixed(3)+' Å','residues '+residues(row),row.seqout,'structure export '+(1000*data.elapsed).toFixed(1)+' ms'].filter(Boolean).join(' · ');
+    $('sceneStatus').textContent=targetName(row);$('sceneStatus').title='Structure export '+(1000*data.elapsed).toFixed(1)+' ms';
+    const facts=[['RMSD',Number(row.rmsd).toFixed(3)+' Å'],['Residues',residues(row).replaceAll(' ',', ')],['Sequence',String(row.seqout||'').replaceAll('/',' ')],['Database',databaseName(row)]];
+    $('facts').replaceChildren(...facts.filter(fact=>fact[1]).map(([name,value])=>make('div',{},make('dt',{textContent:name}),make('dd',{textContent:value}))));
+    shown=i;$('about').textContent=describe(row);
     $('targetInfo').hidden=!accession;if(accession)$('targetInfo').href='https://www.uniprot.org/uniprotkb/'+accession+'/entry';
     for(const [j,tr] of [...$('hits').children].entries())tr.classList.toggle('active',i===j);
   }catch(e){$('sceneStatus').textContent=e.message;}
   finally{busy=false;$('search').disabled=false;}
 }
+// With `cfg.annotate`, gene symbol, protein name and organism come from UniProt by accession, 300
+// hits to a request. The hits are listed first and the names fill in; a failed lookup leaves them out.
+const about=new Map();
+const lead=text=>String(text||'').replace(/ [\[(].*$/,'');
+function describe(row){const known=about.get(uniprot(row.target_id));return known?[known.gene,lead(known.name),lead(known.organism)].filter(Boolean).join(' · '):'';}
+async function annotate(){
+  const wanted=[...new Set(rows.map(row=>uniprot(row.target_id)))].filter(accession=>accession&&!about.has(accession));
+  for(let i=0;i<wanted.length;i+=300){
+    try{
+      const response=await fetch('https://rest.uniprot.org/uniprotkb/accessions?format=tsv&size=500&fields=accession,gene_primary,protein_name,organism_name&accessions='+wanted.slice(i,i+300).join(','));
+      if(!response.ok)return;
+      for(const line of (await response.text()).split('\n').slice(1)){const [accession,gene,name,organism]=line.split('\t');if(accession)about.set(accession,{gene,name,organism});}
+    }catch{return;}
+    for(const [j,tr] of [...$('hits').children].entries()){const note=tr.querySelector('.about');if(note&&rows[j])note.textContent=describe(rows[j])||'\u00a0';}
+    if(rows[shown])$('about').textContent=describe(rows[shown]);
+  }
+}
+function annotatedDownload(){
+  const lines=download.trimEnd().split('\n'),at=lines[0].split('\t').indexOf('target_id');
+  if(!about.size||at<0)return download;
+  return lines.map((line,i)=>{
+    const known=i?about.get(uniprot(line.split('\t')[at])):{gene:'gene',name:'protein',organism:'organism'};
+    return line+'\t'+[known?.gene,known?.name,known?.organism].map(value=>value||'').join('\t');
+  }).join('\n')+'\n';
+}
 function listHits(){
-  const several=new Set(rows.map(row=>row.source_index||'')).size>1;
-  // With several databases the row names the database; the figure caption gives the residues.
-  $('databaseHead').hidden=!several;$('residuesHead').hidden=several;
+  const several=new Set(rows.map(row=>row.source_index||'')).size>1,named=Boolean(cfg.annotate);
+  // The third column is the database when several were searched, else the residues unless the
+  // row carries the protein's name; the figure caption always gives the residues.
+  $('databaseHead').hidden=!several;$('residuesHead').hidden=several||named;
   $('hits').replaceChildren(...rows.map((row,i)=>{
     const cell=(text,className='')=>make('td',{className,textContent:text});
-    const tr=make('tr',{title:row.target_id+' · residues '+residues(row)},cell(i+1,'num'),make('td',{},make('button',{textContent:row.target_id})));
-    tr.append(cell(several?databaseName(row):residues(row)),cell(Number(row.rmsd).toFixed(3),'num'));
+    const target=make('td',{},make('button',{textContent:targetName(row)}));
+    if(named&&uniprot(row.target_id))target.append(make('span',{className:'about',textContent:describe(row)||'\u00a0'}));
+    const tr=make('tr',{title:targetName(row)+' · residues '+residues(row)},cell(i+1,'num'),target);
+    if(several)tr.append(cell(databaseName(row)));else if(!named)tr.append(cell(residues(row)));
+    tr.append(cell(Number(row.rmsd).toFixed(3),'num'));
     tr.onclick=()=>showScene(i);
     return tr;
   }));
+  if(named)annotate();
 }
 async function search(){
   if(busy)return;busy=true;$('search').disabled=true;
@@ -289,16 +326,18 @@ async function search(){
       index:[...picked.filter(db=>!db.blob).map(db=>db.url),other].filter(Boolean).join('\n'),
       ...(cfg.indexFile?{index_files:picked.filter(db=>db.blob).map(db=>db.blob)}:{})});
     if(data.error)throw Error(data.error);
-    rows=data.rows;download=data.download;scene=null;
+    rows=data.rows;download=data.download;scene=null;shown=null;
     $('scenePanel').hidden=$('sceneTools').hidden=$('view').hidden=true;view(false);
     listHits();$('results').hidden=false;document.body.classList.add('has-hits');
     const targets=new Set(rows.map(row=>(row.source_index||'')+'\n'+row.target_id)).size;
     $('resultSummary').textContent=rows.length.toLocaleString()+(rows.length===1?' placement':' placements')+' · '+targets.toLocaleString()+(targets===1?' target':' targets');
     $('log').textContent=data.log;
-    status('Search finished in '+data.elapsed.toFixed(3)+' s'+(data.engine?' on '+data.engine:'')+'. '+(rows.length?'Select a hit to view it.':'No placements passed these settings.'));
+    status('Search finished in '+data.elapsed.toFixed(3)+' s'+(data.engine?' on '+data.engine:'')+'.'+(rows.length?'':' No placements passed these settings.'));
   }catch(e){status(e.message,true);}
   finally{busy=false;$('search').disabled=false;}
 }
+if(cfg.annotate)document.querySelector('.credit').append(' Gene, protein and organism names are looked up at ',make('a',{href:'https://www.uniprot.org',target:'_blank',rel:'noopener',textContent:'UniProt'}),'.');
+if(cfg.logo){$('logo').src=cfg.logo;$('logo').hidden=false;}
 if(cfg.subtitle)$('subtitle').textContent=cfg.subtitle;
 if(cfg.indexLabel)$('indexLabel').textContent=cfg.indexLabel;
 if(cfg.indexHint)$('indexHint').textContent=cfg.indexHint;
@@ -337,7 +376,7 @@ $('hits').onkeydown=e=>{
   const step=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0,row=e.target.closest('tr')?.[step>0?'nextElementSibling':'previousElementSibling'];
   if(step&&row){e.preventDefault();row.querySelector('button').focus();row.click();}
 };
-$('download').onclick=()=>save('jmfs_matches.tsv',download);$('downloadScene').onclick=()=>scene&&save(scene.name,scene.cif);
+$('download').onclick=()=>save('jmfs_matches.tsv',annotatedDownload());$('downloadScene').onclick=()=>scene&&save(scene.name,scene.cif);
 $('whole').onclick=()=>frameScene('target');$('wholeQuery').onclick=()=>frameScene('query');$('focus').onclick=()=>frameScene('',true);
 $('viewQuery').onclick=()=>view(false);$('viewHit').onclick=()=>view(true);
 for(const id of ['showQuery','showTarget','motifOnly'])$(id).onchange=contextStyle;
