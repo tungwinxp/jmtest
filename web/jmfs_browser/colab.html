@@ -65,10 +65,10 @@
     async function start(enableGuide=false){
     document.getElementById('boot').textContent='Loading the JMFS interface…';
     document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
-    if(!crossOriginIsolated&&'serviceWorker' in navigator){
+    if('serviceWorker' in navigator){
       try{
-        await navigator.serviceWorker.register('./isolate.js',{scope:'./'});await navigator.serviceWorker.ready;
-        if(!sessionStorage.getItem('jmfs-isolation-reload')){sessionStorage.setItem('jmfs-isolation-reload',enableGuide?'guide':'workbench');location.reload();return;}
+        await navigator.serviceWorker.register('./isolate.js',{scope:'./',updateViaCache:'none'});await navigator.serviceWorker.ready;
+        if(!crossOriginIsolated&&!resume){sessionStorage.setItem('jmfs-isolation-reload',enableGuide?'guide':'workbench');location.reload();return;}
       }catch(error){console.warn('Guide isolation unavailable',error);}
     }
     try {

@@ -3,6 +3,8 @@ self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',event=>{
   const request=event.request;
+  // Let the page make external requests, including permission-gated loopback MCP.
+  if(new URL(request.url).origin!==self.location.origin)return;
   if(request.cache==='only-if-cached'&&request.mode!=='same-origin')return;
   event.respondWith((async()=>{
     const response=await fetch(request);
