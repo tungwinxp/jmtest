@@ -3,45 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>JMFS motif search</title>
+  <title>JMFS structure search</title>
 </head>
 <body>
-  <p id="boot" style="font:14px Arial,sans-serif;padding:16px">Loading the JMFS interface…</p>
+  <p id="boot" style="font:13px system-ui,sans-serif;padding:16px">Loading the JMFS interface…</p>
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=19";
+    import { createTransport } from "./colab_transport.js?v=20";
 
     const text = async (url) => {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`${url} (${response.status})`);
       return response.text();
     };
-    try {
-      const [template, sceneJs, pdb] = await Promise.all([
-        text("../../colab/app.html"),
-        text("../../colab/scene.js"),
-        text("../../jmfs/fixtures/protein/serine_three_segment.pdb"),
+    const here = (path) => new URL(path, import.meta.url).href;
+    // The notebook's built-in queries, each with the settings its preset fills in.
+    const queries = [
+      { label: "Human SKP2 F-box", url: here("../../colab/example_query.pdb"),
+        motif: "A113-123,A125-133,A136-140", chemistry_positions: "", chemistry: "none" },
+      { label: "SKP2–SKP1 complex", url: here("../../colab/fbox_complex.pdb"),
+        motif: "A113-123,A125-133,A136-140", chemistry_positions: "", chemistry: "none" },
+      { label: "Serine protease motif", url: here("../../jmfs/fixtures/protein/serine_three_segment.pdb"),
+        motif: "B56-58,B101-103,C194-196", chemistry_positions: "B57,B102,C195", chemistry: "reduced" },
+      { label: "α-Chymotrypsin catalytic triad", url: here("../../benchmarks/manuscript_rebench/queries/4CHA.pdb"),
+        motif: "B57,B102,C195", chemistry_positions: "B57,B102,C195", chemistry: "exact" },
+    ];
+    // The notebook's index sheet (Species, Filename, URL), kept here as a dated copy with sizes.
+    // Google Drive refuses a page's own request for a file, so a listed database is searched in
+    // place only through a mirror that serves byte ranges or the Drive API with a browser key,
+    // either named in site.json. Otherwise the list links to the file for the user to save and add.
+    const listed = async () => {
+      const [sheet, site] = await Promise.all([
+        text("./assets/databases.tsv?v=20"),
+        fetch("./site.json?v=20").then((response) => (response.ok ? response.json() : {}), () => ({})),
       ]);
+      return sheet.trim().split("\n").slice(1).map((line) => {
+        const [name, file, sheetUrl, bytes] = line.split("\t");
+        const id = sheetUrl.match(/\/d\/([\w-]+)/)?.[1];
+        // Drive does serve the file to a link the user follows; without a referrer it skips the
+        // page that warns a large file was not scanned.
+        const get = id
+          ? `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t` : sheetUrl;
+        const url = site.mirror ? new URL(file, new URL(site.mirror, location.href)).href
+          : site.driveKey && id
+            ? `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${encodeURIComponent(site.driveKey)}`
+            : undefined;
+        return { name, file, get, bytes: Number(bytes), url };
+      });
+    };
+    try {
+      const [template, sceneJs, catalog] = await Promise.all([
+        text("../../colab/app.html?v=20"),
+        text("../../colab/scene.js?v=20"),
+        listed(),
+      ]);
+      const demoIndexUrl = here("./assets/demo.jmfsgeom");
       window.jmfsTransport = createTransport({
         workerUrl: new URL("./search_worker.js?v=19", import.meta.url),
         wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=19", import.meta.url),
-        demoIndexUrl: new URL("./assets/demo.jmfsgeom", import.meta.url).href,
+        demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
         cpuLanes: Number(new URLSearchParams(location.search).get("cpuLanes")),
       });
       const config = {
-        pdb,
+        layout: "workbench",
         transport: "jmfsTransport",
+        queries,
+        query: 2,
+        databases: [
+          { name: "Example · two structures", url: demoIndexUrl, checked: true, example: true },
+          ...catalog,
+        ],
         indexFile: true,
         subtitle: await navigator.gpu?.requestAdapter().catch(() => null)
-          ? "This browser · searches run on this computer's GPU through WebGPU"
-          : "This browser · no WebGPU adapter, so searches run on this computer's CPU",
-        indexLabel: "Target database on this computer or the web",
-        indexPlaceholder: "Leave empty for the small example database, or enter an https .jmfsgeom URL",
-        indexHint: "Choose a .jmfsgeom file from this computer, or enter the URL of one served with byte ranges. "
-          + "The file is read in place; nothing is uploaded. Public Folddisco databases are not JMFS indexes.",
-        ready: "Search the example database, or choose your own target index.",
+          ? "Searches run in this browser on this computer's GPU"
+          : "No WebGPU adapter · searches run in this browser on this computer's CPU",
+        indexLabel: "Address of a .jmfsgeom file served with byte ranges",
+        indexPlaceholder: "https://…/database.jmfsgeom",
+        indexHint: catalog.some((database) => !database.url)
+          ? "Get file downloads a database from Google Drive; add the saved file here. "
+            + "Files are read in place and nothing is uploaded."
+          : "Files are read in place and nothing is uploaded.",
+        ready: "Ready.",
       };
       const html = template
         .replace("__JMFS_CONFIG__", () => JSON.stringify(config).replaceAll("<", "\\u003c"))

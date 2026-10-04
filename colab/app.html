@@ -1,54 +1,111 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JMFS structure search</title>
 <style>
-*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#fff;color:#202124;font:14px Arial,sans-serif}
-header{padding:15px 22px;background:#f8f9fa;border-bottom:1px solid #dadce0;font-size:21px}header small{font-size:12px;color:#3c4043;margin-left:14px}
-main{max-width:1200px;margin:12px auto;padding:0 12px}.panel{background:white;margin-bottom:12px;border:1px solid #dadce0;border-radius:6px;box-shadow:0 1px 2px #0001}
-.title,summary{background:#484848;color:white;padding:12px 16px;font-size:18px;font-weight:normal}.body{padding:16px}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-label{display:block;color:#3c4043;font-size:13px;margin-bottom:7px}textarea,input,select{font:14px Arial,sans-serif;padding:9px;border:1px solid #9aa0a6;border-radius:3px;background:white;color:#202124;max-width:100%}input[type=text],textarea{width:100%}textarea{font:12px monospace;resize:vertical;height:190px}
-button,.button{display:inline-block;border:0;border-radius:3px;background:#eee;color:#222;padding:11px 16px;cursor:pointer;font:14px Arial,sans-serif;letter-spacing:.03em;box-shadow:0 1px 3px #0003}button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:wait}button.primary{background:#488fdb;color:white}.button input{display:none}
-.hint{font-size:12px;color:#3c4043;line-height:1.5}.viewer{height:350px;position:relative;border:1px solid #dadce0;background:white}.status{white-space:pre-wrap;line-height:1.5}.error{color:#b91c1c}.field{flex:1;min-width:150px}.wide{width:100%}.spaced{margin-top:14px}summary{cursor:pointer}table{width:100%;border-collapse:collapse}th,td{padding:10px;text-align:left;border-bottom:1px solid #dadce0}th{background:#f8f9fa}td button{padding:7px 12px}tbody tr.active{background:#e8f0fe}.scroll{max-height:350px;overflow:auto}#resultViewer{height:min(62vh,720px);min-height:480px}pre{white-space:pre-wrap;max-height:240px;overflow:auto;font-size:12px}a{color:#1a73e8}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #1a73e8;outline-offset:2px}@media(max-width:700px){.split{grid-template-columns:1fr}header small{display:block;margin:6px 0 0}#resultViewer{min-height:420px}}
-.toggles{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0}.toggles label{display:flex;gap:6px;align-items:center;margin:0;color:#333}.toggles input{accent-color:#488fdb}.chain-group{border:1px solid #ddd;border-radius:3px;padding:8px 12px;margin:8px 0;min-width:0}.chain-group legend{font-size:13px;color:#555}#sceneStatus{min-height:18px}
+/* Tokens and rules follow web/jmfs_browser/DESIGN.md. */
+:root{--primary:#1967d2;--primary-hover:#185abc;--wash:#e8f0fe;--surface:#fff;--dim:#f8f9fa;--ink:#202124;--muted:#5f6368;--hairline:#dadce0;--outline:#9aa0a6;--error:#b3261e;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;overflow-x:hidden;background:var(--surface);color:var(--ink);font:13px/1.45 var(--sans)}
+h1,h2,p,figure{margin:0}h1{font-size:16px;font-weight:600;line-height:1.3}h2{margin-bottom:12px;font-size:13px;font-weight:600;line-height:1.3}
+a{color:var(--primary)}label,.hint,figcaption,summary{color:var(--muted);font-size:12px;line-height:1.35}label{display:block;margin-bottom:4px}
+input[type=text],input[type=number],select,textarea{width:100%;height:32px;padding:0 8px;border:1px solid var(--hairline);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
+input:hover,select:hover,textarea:hover{border-color:var(--outline)}input:disabled{background:var(--dim);color:var(--muted)}
+textarea{height:160px;padding:8px;resize:vertical}textarea,.data,td,pre{font:12px/1.5 var(--mono);font-feature-settings:"tnum" 1}
+input[type=checkbox]{margin:0;accent-color:var(--primary)}
+:focus-visible,.button:focus-within{outline:2px solid var(--primary);outline-offset:-1px}
+button,.button{display:inline-flex;align-items:center;justify-content:center;height:32px;margin:0;padding:0 12px;border:1px solid var(--hairline);border-radius:6px;background:var(--dim);color:var(--ink);font:12px/1 var(--sans);white-space:nowrap;cursor:pointer;transition:background-color .12s}
+button:hover,.button:hover{border-color:var(--outline);background:var(--wash)}button:disabled{opacity:.5;cursor:default}
+.button{position:relative}.button input{position:absolute;width:1px;height:1px;opacity:0}
+.key{width:100%;height:36px;border-color:var(--primary);background:var(--primary);color:#fff;font:600 13px/1 var(--sans)}.key:hover{border-color:var(--primary-hover);background:var(--primary-hover)}
+.seg{display:inline-flex}.seg button{margin-left:-1px;border-radius:0}.seg button:first-child{margin-left:0;border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button[aria-pressed=true]{background:var(--wash);color:var(--primary)}
+.app{max-width:1120px;margin:0 auto;padding:16px}header{padding-bottom:16px}
+.group{padding:16px 0;border-top:1px solid var(--hairline)}.field{margin-top:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}.pair{display:flex;gap:8px;align-items:center}.pair select{flex:1;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.chem{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px}.query{display:grid;gap:16px}.query>*{min-width:0}#querySlot:empty{display:none}
+details{margin-top:12px}summary{cursor:pointer}details>*+*{margin-top:8px}details.plain{margin-top:0}details.plain>summary{display:none}details.plain>summary+*{margin-top:0}
+#indexHint{margin-bottom:8px}.list{max-height:182px;margin-bottom:8px;overflow-y:auto;border:1px solid var(--hairline);border-radius:8px}
+.list label{display:flex;gap:8px;align-items:center;min-height:30px;margin:0;padding:0 10px;color:var(--ink);font-size:13px;cursor:pointer}
+.list label:hover{background:var(--dim)}.list label:has(:checked){background:var(--wash)}.list label:has(:disabled){cursor:default}
+.list .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.list .data{color:var(--muted)}.list a{font-size:12px}
+.status{min-height:18px;margin-top:8px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--error)}
+figure,figcaption{display:flex;flex-direction:column;gap:8px;min-width:0}.caption{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.viewer{position:relative;height:340px;overflow:hidden;border:1px solid var(--hairline);border-radius:8px;background:var(--surface)}#resultViewer{height:min(62vh,640px);min-height:420px}
+.dot{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:9999px}label .dot{margin:0}
+.toggles{display:flex;flex-wrap:wrap;gap:4px 12px}.toggles label{display:inline-flex;gap:5px;align-items:center;margin:0;color:var(--ink)}
+.hits .bar{justify-content:space-between;margin-bottom:12px}.scroll{max-height:391px;overflow-y:auto;overflow-x:hidden}
+table{width:100%;table-layout:fixed;border-collapse:collapse}th,td{height:30px;padding:0 8px;overflow:hidden;border-bottom:1px solid var(--hairline);text-align:left;text-overflow:ellipsis;white-space:nowrap}
+th{position:sticky;top:0;background:var(--dim);color:var(--muted);font-size:12px;font-weight:400}th.rank{width:40px}th.database{width:30%}th.residues{width:34%}th.rmsd{width:60px}.num{text-align:right}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--dim)}tbody tr.active{background:var(--wash)}
+td button{display:block;width:100%;height:29px;padding:0;overflow:hidden;border:0;border-radius:0;background:none;font:inherit;text-align:left;text-overflow:ellipsis}td button:hover{background:none}
+pre{max-height:240px;margin:0;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+.stage{display:flex;flex-direction:column;gap:8px}.stage:not(:has(>#scenePanel:not([hidden]),>#queryFigure)){display:none}body:not(.bench) #view{display:none}#sceneTools{display:contents}#downloadScene{margin-left:auto}
+.credit{padding-top:16px;border-top:1px solid var(--hairline)}
+@media(min-width:720px){body:not(.bench) .query{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+/* Workbench: settings, hits and one figure side by side in a window that does not scroll. */
+body.bench{height:100dvh;overflow:hidden}
+.bench .app{display:grid;grid-template-columns:376px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;max-width:none;height:100dvh;margin:0;padding:0}
+.bench.has-hits .app{grid-template-columns:376px clamp(360px,30vw,500px) minmax(0,1fr)}
+.bench .panel{grid-area:1/1/3;padding:16px 16px 0;overflow-y:auto;border-right:1px solid var(--hairline)}
+.bench .run{position:sticky;bottom:0;padding:12px 0;background:var(--surface)}
+.bench .credit{grid-area:2/-2;padding:0 16px 12px;border:0}
+.bench .hits{grid-row:1/3;display:flex;flex-direction:column;min-height:0;padding:16px 0 0;border-top:0;border-right:1px solid var(--hairline)}
+.bench .hits .bar{padding:0 16px}.bench .scroll{flex:1;max-height:none;border-top:1px solid var(--hairline)}.bench .hits details{margin:0;padding:8px 16px}
+.bench .stage{grid-area:1/-2;min-width:0;min-height:0;padding:16px;overflow-y:auto;border-top:0}
+.bench figure{flex:1}.bench .viewer,.bench #resultViewer{flex:1;height:auto;min-height:240px}
+.bench.on-hit #queryFigure,.bench:not(.on-hit) #scenePanel,.bench:not(.on-hit) #sceneTools{display:none}
 </style></head><body>
-<header>JMFS motif search <small id="subtitle">Google Colab · searches run in your runtime</small></header>
-<main>
-<section class="panel"><h1 class="title" style="margin:0">Input protein motif structure (PDB)</h1><div class="body">
-<div class="split"><div><label for="pdb">Query structure</label><textarea id="pdb" spellcheck="false" aria-label="PDB query contents"></textarea>
-<div class="row spaced"><label class="button" for="upload" style="margin:0">UPLOAD PDB<input type="file" id="upload" accept=".pdb,.ent,text/plain"></label><button id="example">LOAD EXAMPLE</button><button id="preview">UPDATE PREVIEW</button></div>
-<p class="hint" id="fileName">Example: serine-protease motif. Upload or paste your own PDB.</p></div>
-<div><div id="queryViewer" class="viewer" aria-label="Query structure preview"></div><div id="queryChains" class="toggles" aria-label="Query preview chains"></div><p class="hint">Rotate to inspect. Click a residue to add or remove it from the motif. Orange marks the selected residues. Hiding a chain does not change the search motif.</p></div></div>
-<label for="motif">Selected Motif</label><input id="motif" type="text" value="B56-58,B101-103,C194-196" placeholder="A10-12,A45-47,A80-82">
-<p class="hint">Use chain IDs and PDB residue numbers. Commas separate blocks; ranges include every residue between their endpoints.</p>
-</div></section>
-<details class="panel"><summary>Databases &amp; search settings</summary><div class="body">
-<label for="index" id="indexLabel">Target database in this Colab runtime</label><input id="index" type="text" placeholder="Leave empty for the small example database, or enter a .jmfsgeom path">
-<div id="indexFileRow" class="row spaced" hidden><label class="button" for="indexFile" style="margin:0">CHOOSE .JMFSGEOM FILE<input type="file" id="indexFile" accept=".jmfsgeom,application/octet-stream"></label><span id="indexFileName" class="hint"></span></div>
+<div class="app">
+<section class="panel" aria-label="Search settings">
+<header><h1>JMFS structure search</h1><p class="hint" id="subtitle">Google Colab · searches run in your runtime</p></header>
+<section class="group"><h2>Query</h2><div class="query"><div>
+<div class="pair"><select id="source" aria-label="Query structure"></select><label class="button" for="upload">Upload PDB<input type="file" id="upload" accept=".pdb,.ent,text/plain"></label></div>
+<div class="field"><label for="motif">Motif residues</label><input id="motif" class="data" type="text" spellcheck="false" placeholder="A10-12,A45-47,A80-82" title="Chain IDs and PDB residue numbers. Commas separate blocks; a range includes every residue between its ends."></div>
+<div class="field chem"><div><label for="chemistry">Chemistry</label><select id="chemistry"><option value="reduced">Reduced</option><option value="exact">Exact</option><option value="none">None</option></select></div>
+<div><label for="chemistryPositions">Chemistry-gated residues</label><input id="chemistryPositions" class="data" type="text" spellcheck="false"></div></div>
+<details><summary>PDB text</summary><textarea id="pdb" spellcheck="false" aria-label="PDB query contents"></textarea><button id="preview">Update preview</button></details>
+</div><div id="querySlot"><figure id="queryFigure"><div id="queryViewer" class="viewer" aria-label="Query structure preview"></div>
+<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" style="background:#1a73e8"></i>motif</span><span><i class="dot" style="background:#d55e00"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
+<section class="group"><h2>Databases</h2>
+<div id="databases" class="list" role="group" aria-label="Target databases" hidden></div>
 <p class="hint" id="indexHint">For your database, mount Google Drive and enter its index path. Public Folddisco databases are not JMFS indexes.</p>
-<div class="row spaced"><div class="field"><label for="rmsd">Maximum RMSD (Å)</label><input id="rmsd" type="number" value="2.0" min="0.001" max="100" step="0.05"></div>
-<div class="field"><label for="chemistry">Residue chemistry</label><select id="chemistry"><option value="reduced">Reduced</option><option value="exact">Exact</option><option value="none">None</option></select></div>
-<div class="field"><label for="limit">Maximum retained placements</label><input id="limit" type="number" value="100" min="1" max="10000"></div>
-<div class="field"><label for="cpu">Execution</label><select id="cpu"><option value="auto">Automatic GPU / CPU</option><option value="cpu">CPU</option></select></div></div>
-<label class="spaced" for="chemistryPositions">Chemistry-gated residues (optional)</label><input id="chemistryPositions" type="text" value="B57,B102,C195" placeholder="Empty applies chemistry to all selected residues">
-</div></details>
-<section class="panel"><div class="body row"><button id="search" class="primary">SEARCH</button><div><strong>Summary</strong><div id="status" class="status" role="status" aria-live="polite">Search the example database, or select your own target index.</div></div></div></section>
-<section id="results" class="panel" hidden><h2 class="title" style="margin:0">Results</h2><div class="body"><div class="row"><span id="resultSummary"></span><button id="download">DOWNLOAD RESULTS</button></div>
-<div class="scroll spaced"><table><thead><tr><th>Target</th><th>RMSD (Å)</th><th>Matched residues</th><th>Structure</th></tr></thead><tbody id="hits"></tbody></table></div>
-<div id="scenePanel" hidden><p id="sceneStatus" class="hint" role="status" aria-live="polite"></p>
-<div class="toggles"><label><input id="showQuery" type="checkbox" checked>Query</label><label><input id="showTarget" type="checkbox" checked>Target</label><label><input id="motifOnly" type="checkbox">Motif only</label></div>
-<div id="resultViewer" class="viewer" aria-label="Query and target motif superposition"></div>
-<p class="hint">CLI motif superposition · cyan: query · grey: target · white/orange: matched query/target residues. Drag to rotate; scroll to zoom.</p>
-<div class="row"><button id="whole">WHOLE TARGET</button><button id="wholeQuery">WHOLE QUERY</button><button id="focus">FOCUS MOTIF</button><button id="downloadScene">DOWNLOAD STRUCTURE</button></div>
-<div class="split spaced"><fieldset class="chain-group"><legend>Query chains</legend><div id="resultQueryChains" class="toggles"></div></fieldset><fieldset class="chain-group"><legend>Target chains</legend><div id="resultTargetChains" class="toggles"></div></fieldset></div>
-<p class="hint">Chain controls change visibility only. The download retains the complete CLI superposition. Protein backbone and secondary structure may be estimated from indexed Cα coordinates.</p></div>
-<details class="spaced"><summary>Search log</summary><pre id="log"></pre></details></div></section>
-<p class="hint">Interface adapted for Colab from the workflow of the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">public Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS. Protein backbone reconstruction uses PULCHRA fragments; RNA/DNA reconstruction from C4′ alone is not included.</p>
-</main>
+<div id="indexFileRow" class="pair" hidden><label class="button" for="indexFile">Add .jmfsgeom files<input type="file" id="indexFile" accept=".jmfsgeom,application/octet-stream" multiple></label><span id="indexFileName" class="hint"></span></div>
+<details id="indexOther" class="plain" open><summary>Other database</summary><div><label for="index" id="indexLabel">Target database in this Colab runtime</label><input id="index" class="data" type="text" spellcheck="false" placeholder="Leave empty for the small example database, or enter a .jmfsgeom path"></div></details></section>
+<section class="group"><h2>Parameters</h2><div class="grid">
+<div><label for="rmsd">RMSD cutoff (Å)</label><input id="rmsd" type="number" value="2.0" min="0.001" max="100" step="0.05"></div>
+<div><label for="limit">Hits kept</label><input id="limit" type="number" value="100" min="1" max="10000"></div>
+<div><label for="cpu">Compute</label><select id="cpu"><option value="auto">GPU or CPU</option><option value="cpu">CPU</option></select></div></div></section>
+<div class="group run"><button id="search" class="key">Search</button><p id="status" class="status" role="status" aria-live="polite"></p></div>
+</section>
+<section id="results" class="group hits" aria-label="Hits" hidden><div class="bar"><span id="resultSummary"></span><button id="download">Download results</button></div>
+<div class="scroll"><table><thead><tr><th class="rank num">#</th><th>Target</th><th id="databaseHead" class="database" hidden>Database</th><th id="residuesHead" class="residues">Residues</th><th class="rmsd num">RMSD</th></tr></thead><tbody id="hits"></tbody></table></div>
+<details><summary>Search log</summary><pre id="log"></pre></details></section>
+<section id="stage" class="group stage" aria-label="Structure"><div class="bar">
+<div id="view" class="seg" hidden><button id="viewQuery" aria-pressed="false">Query</button><button id="viewHit" aria-pressed="true">Hit</button></div>
+<div id="sceneTools" class="bar" hidden><div class="seg"><button id="focus">Focus motif</button><button id="wholeQuery">Whole query</button><button id="whole">Whole target</button></div>
+<button id="downloadScene">Download structure</button></div></div>
+<figure id="scenePanel" hidden><div id="resultViewer" class="viewer" aria-label="Query and target motif superposition"></div>
+<figcaption><div class="caption"><span id="sceneStatus" class="data" role="status" aria-live="polite"></span><a id="targetInfo" target="_blank" rel="noopener noreferrer" hidden>UniProt entry</a></div>
+<div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" style="background:#0072b2"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
+<div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" style="background:#d55e00"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
+<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" style="background:#000"></i>matched query</span><span><i class="dot" style="background:#e69f00"></i>matched target</span></div>
+<div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments); RNA/DNA is not rebuilt from C4′ alone. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
+<p class="hint credit">Workflow after the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS.</p>
+</div>
 <script type="application/json" id="config">__JMFS_CONFIG__</script>
 <script src="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js"></script>
 <script>
 __JMFS_SCENE_JS__
 (() => {
 const cfg=JSON.parse(document.getElementById('config').textContent), $=id=>document.getElementById(id);
+const make=(tag,props,...children)=>{const node=Object.assign(document.createElement(tag),props);node.append(...children);return node;};
+const ready=cfg.ready||'Search the example database, or select your own target index.';
+// A host may list its own built-in queries, each with its structure as text or as a URL.
+const queries=cfg.queries||[{label:'Serine protease motif',pdb:cfg.pdb,motif:'B56-58,B101-103,C194-196',chemistry_positions:'B57,B102,C195',chemistry:'reduced'}];
+// A host may list databases. One with a `url` is searched in place; one with only a `get` link
+// must first be saved by the user and added as a file.
+const databases=(cfg.databases||[]).map(db=>({...db}));
+const sourceNames=new Map();
 let queryViewer,resultViewer,rows=[],download='',scene=null,busy=false;
 let previewChains=new Set(),sceneChains=new Set();
 const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
@@ -61,8 +118,14 @@ const call=async(method,payload)=>{
   const response=await google.colab.kernel.invokeFunction(cfg.callback,[method,payload],{});
   const data=response.data['application/json']; return typeof data==='string'?JSON.parse(data):data;
 };
-function selection(){const list=[];for(const token of $('motif').value.split(',')){const m=token.trim().match(/^(.+?)(-?\d+)(?:-(-?\d+))?$/);if(m)list.push({chain:m[1],start:Number(m[2]),end:Number(m[3]??m[2])});}return list;}
-function selected(atom){return selection().some(r=>atom.chain===r.chain&&atom.resi>=r.start&&atom.resi<=r.end);}
+function createViewer(id){
+  if(!window.$3Dmol)throw Error('The molecular viewer did not load. Check your internet connection.');
+  let viewer;try{viewer=$3Dmol.createViewer($(id),{backgroundColor:'white'});}catch{}
+  if(!viewer)throw Error('This browser cannot draw 3D structures (WebGL is unavailable).');
+  return viewer;
+}
+function ranges(text){const list=[];for(const token of text.split(',')){const m=token.trim().match(/^(.+?)(-?\d+)(?:-(-?\d+))?$/);if(m)list.push({chain:m[1],start:Number(m[2]),end:Number(m[3]??m[2])});}return list;}
+const within=(list,atom)=>list.some(r=>atom.chain===r.chain&&atom.resi>=r.start&&atom.resi<=r.end);
 function chainControls(container,chains,enabled,onchange,prefix=''){
   container.replaceChildren();
   for(const chain of chains){
@@ -72,8 +135,66 @@ function chainControls(container,chains,enabled,onchange,prefix=''){
     label.append(input,document.createTextNode(prefix+(chain.replace(/^(query|target)_/,'')||'(blank)')));container.append(label);
   }
 }
-function highlight(){if(!queryViewer)return;queryViewer.setStyle({},{});queryViewer.setStyle({predicate:a=>previewChains.has(a.chain)}, {cartoon:{color:'#b9c4cf'},stick:{hidden:true}});queryViewer.setStyle({predicate:a=>previewChains.has(a.chain)&&selected(a)},{cartoon:{color:'#f59e0b'},stick:{radius:.15,color:'#f59e0b'}});queryViewer.render();}
-function preview(){try{if(!window.$3Dmol)throw Error('The molecular viewer did not load. Check your internet connection.');if(!queryViewer)queryViewer=$3Dmol.createViewer($('queryViewer'),{backgroundColor:'white'});queryViewer.removeAllModels();queryViewer.addModel($('pdb').value,'pdb');previewChains=new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain));chainControls($('queryChains'),[...previewChains].sort(),previewChains,highlight,'Chain ');queryViewer.setClickable({},true,(atom)=>{if(!previewChains.has(atom.chain))return;let chosen=new Set();for(const a of queryViewer.getModel().selectedAtoms({atom:'CA'}))if(selected(a))chosen.add(a.chain+a.resi);const key=atom.chain+atom.resi;if(chosen.has(key))chosen.delete(key);else chosen.add(key);$('motif').value=[...chosen].join(',');highlight();});highlight();queryViewer.zoomTo();queryViewer.render();}catch(e){status(e.message,true);}}
+// The query figure: motif residues blue, those gated by chemistry vermillion, as in the notebook.
+function highlight(){
+  if(!queryViewer)return;
+  const motif=ranges($('motif').value),gates=ranges($('chemistryPositions').value),gated=$('chemistry').value!=='none';
+  const shown=a=>previewChains.has(a.chain),paint=color=>({cartoon:{color},stick:{radius:.15,color}});
+  queryViewer.setStyle({},{});
+  queryViewer.setStyle({predicate:shown},{cartoon:{color:'#b8c1cc',opacity:.5}});
+  queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)},paint('#1a73e8'));
+  if(gated)queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))},paint('#d55e00'));
+  queryViewer.render();
+}
+function preview(){
+  try{
+    queryViewer||=createViewer('queryViewer');
+    queryViewer.removeAllModels();queryViewer.addModel($('pdb').value,'pdb');
+    previewChains=new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain));
+    chainControls($('queryChains'),[...previewChains].sort(),previewChains,highlight,'Chain ');
+    queryViewer.setClickable({},true,atom=>{
+      if(!previewChains.has(atom.chain))return;
+      const motif=ranges($('motif').value),chosen=new Set();
+      for(const a of queryViewer.getModel().selectedAtoms({atom:'CA'}))if(within(motif,a))chosen.add(a.chain+a.resi);
+      const key=atom.chain+atom.resi;
+      if(chosen.has(key))chosen.delete(key);else chosen.add(key);
+      $('motif').value=[...chosen].join(',');highlight();
+    });
+    highlight();queryViewer.zoomTo();queryViewer.render();
+  }catch(e){status(e.message,true);}
+}
+function gate(){const off=$('chemistry').value==='none';$('chemistryPositions').disabled=off;$('chemistryPositions').placeholder=off?'':'All motif residues';}
+async function loadQuery(i){
+  const query=queries[i];
+  try{
+    if(query.pdb==null){
+      status('Loading '+query.label+'…');
+      const response=await fetch(query.url);
+      if(!response.ok)throw Error(query.label+' could not be loaded ('+response.status+').');
+      query.pdb=await response.text();status(ready);
+    }
+  }catch(e){status(e.message,true);return;}
+  if($('source').value!==String(i))return;
+  $('pdb').value=query.pdb;$('motif').value=query.motif;$('chemistryPositions').value=query.chemistry_positions;
+  $('chemistry').value=query.chemistry;gate();
+  $('fileName').textContent=query.label;preview();
+}
+// The example stands in until a real database is chosen.
+function dropExample(){if(databases.some(db=>db.example&&db.checked)){for(const db of databases)if(db.example)db.checked=false;listDatabases();}}
+function megabytes(bytes){return bytes>=1e9?(bytes/1e9).toFixed(1)+' GB':Math.max(1,Math.round(bytes/1e6))+' MB';}
+function listDatabases(){
+  sourceNames.clear();
+  $('databases').replaceChildren(...databases.map(db=>{
+    const input=make('input',{type:'checkbox',checked:Boolean(db.checked),disabled:!(db.url||db.blob)});
+    input.onchange=()=>{db.checked=input.checked;if(db.checked&&!db.example)dropExample();};
+    if(db.url)sourceNames.set(db.url,db.name);
+    if(db.blob)sourceNames.set(db.blob.name,db.name);
+    const row=make('label',{title:db.file||db.name},input,make('span',{className:'name',textContent:db.name}));
+    if(db.bytes)row.append(make('span',{className:'data',textContent:megabytes(db.bytes)}));
+    if(input.disabled&&db.get)row.append(make('a',{href:db.get,target:'_blank',rel:'noopener noreferrer',textContent:'Get file'}));
+    return row;
+  }));
+}
 // The scene's own secondary-structure loops, when the host did not parse them.
 function secondarySpans(cif){
   const spans=[];let headers=[];
@@ -93,28 +214,135 @@ function secondarySpans(cif){
   return spans;
 }
 function save(name,text){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+// Zero-based search starts as one-based matched target ranges.
+function residues(row){
+  const starts=String(row.seg_beg).split(/[,;]/).map(Number),lengths=String(row.seg_len).split(/[,;]/).map(Number);
+  return starts.map((start,i)=>lengths[i]===1?String(start+1):(start+1)+'–'+(start+lengths[i])).join(' ');
+}
+// The accession rule of the notebook's "More target info" link.
+function uniprot(target){
+  const text=String(target).toUpperCase(),valid=/^(?:[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9](?:[A-Z][A-Z0-9]{2}[0-9]){1,2})$/;
+  const model=text.match(/(?:^|[^A-Z0-9])AF-([A-Z0-9]{6,10})-F[0-9]+(?:[^A-Z0-9]|$)/);
+  if(model&&valid.test(model[1]))return model[1];
+  return (text.match(/(?<![A-Z0-9])[A-Z0-9]{6,10}(?![A-Z0-9])/g)||[]).find(token=>valid.test(token));
+}
+const databaseName=row=>sourceNames.get(row.source_index)||String(row.source_index||'').split(/[\\/]/).pop();
+function resize(){for(const [viewer,id] of [[queryViewer,'queryViewer'],[resultViewer,'resultViewer']])if(viewer&&$(id).offsetWidth)viewer.resize();}
+// The workbench shows one figure at a time; the sheet shows both where they belong.
+function view(hit){
+  document.body.classList.toggle('on-hit',hit);
+  $('viewQuery').setAttribute('aria-pressed',String(!hit));$('viewHit').setAttribute('aria-pressed',String(hit));resize();
+}
+const wide=matchMedia('(min-width:1100px)');
+function arrange(){
+  const bench=cfg.layout==='workbench'&&wide.matches,home=bench?$('stage'):$('querySlot');
+  document.body.classList.toggle('bench',bench);
+  if($('queryFigure').parentNode!==home)home.append($('queryFigure'));
+  resize();
+}
 function prepareScene(secondary){
   installJMFSScene(resultViewer,secondary);
   sceneChains=new Set(resultViewer.getModel().selectedAtoms({}).filter(a=>!isMatch(a)).map(a=>a.chain));
   for(const role of ['query','target'])chainControls($('result'+(role==='query'?'Query':'Target')+'Chains'),[...sceneChains].filter(c=>c.startsWith(role+'_')).sort(),sceneChains,contextStyle,'Chain ');
 }
 function contextStyle(){if(resultViewer)resultViewer.jmfsVisibility([...sceneChains],$('showQuery').checked,$('showTarget').checked,$('motifOnly').checked);}
-function frameScene(role,match=false){resultViewer.jmfsFocus(role,match);}
-async function showScene(i){if(busy)return;busy=true;$('search').disabled=true;try{$('scenePanel').hidden=false;$('sceneStatus').textContent='Loading structure…';const data=await call('scene',{row:i});if(data.error)throw Error(data.error);scene=data;if(!resultViewer)resultViewer=$3Dmol.createViewer($('resultViewer'),{backgroundColor:'#172033'});resultViewer.removeAllModels();resultViewer.addModel(data.cif,'cif',{doAssembly:false,hbondCutoff:0});prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();frameScene('',true);resultViewer.resize();$('sceneStatus').textContent=rows[i].target_id+' · structure export '+(1000*data.elapsed).toFixed(1)+' ms';for(const [j,tr] of [...$('hits').children].entries())tr.classList.toggle('active',i===j);}catch(e){$('sceneStatus').textContent=e.message;}finally{busy=false;$('search').disabled=false;}}
+// A motif of a few residues is framed with enough of its surroundings to place it.
+function frameScene(role,match=false){resultViewer.jmfsFocus(role,match);if(match){resultViewer.zoom(.6);resultViewer.render();}}
+async function showScene(i){
+  if(busy)return;busy=true;$('search').disabled=true;
+  try{
+    $('scenePanel').hidden=$('sceneTools').hidden=$('view').hidden=false;view(true);
+    $('sceneStatus').textContent='Loading structure…';$('targetInfo').hidden=true;
+    const data=await call('scene',{row:i});
+    if(data.error)throw Error(data.error);
+    scene=data;
+    resultViewer||=createViewer('resultViewer');
+    resultViewer.removeAllModels();resultViewer.addModel(data.cif,'cif',{doAssembly:false,hbondCutoff:0});
+    prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();resultViewer.resize();frameScene('',true);
+    const row=rows[i],accession=uniprot(row.target_id);
+    $('sceneStatus').textContent=[row.target_id,'RMSD '+Number(row.rmsd).toFixed(3)+' Å','residues '+residues(row),row.seqout,'structure export '+(1000*data.elapsed).toFixed(1)+' ms'].filter(Boolean).join(' · ');
+    $('targetInfo').hidden=!accession;if(accession)$('targetInfo').href='https://www.uniprot.org/uniprotkb/'+accession+'/entry';
+    for(const [j,tr] of [...$('hits').children].entries())tr.classList.toggle('active',i===j);
+  }catch(e){$('sceneStatus').textContent=e.message;}
+  finally{busy=false;$('search').disabled=false;}
+}
+function listHits(){
+  const several=new Set(rows.map(row=>row.source_index||'')).size>1;
+  // With several databases the row names the database; the figure caption gives the residues.
+  $('databaseHead').hidden=!several;$('residuesHead').hidden=several;
+  $('hits').replaceChildren(...rows.map((row,i)=>{
+    const cell=(text,className='')=>make('td',{className,textContent:text});
+    const tr=make('tr',{title:row.target_id+' · residues '+residues(row)},cell(i+1,'num'),make('td',{},make('button',{textContent:row.target_id})));
+    tr.append(cell(several?databaseName(row):residues(row)),cell(Number(row.rmsd).toFixed(3),'num'));
+    tr.onclick=()=>showScene(i);
+    return tr;
+  }));
+}
+async function search(){
+  if(busy)return;busy=true;$('search').disabled=true;
+  try{
+    const picked=databases.filter(db=>db.checked),other=$('index').value.trim();
+    if(databases.length&&!picked.length&&!other)throw Error('Choose a database to search.');
+    status('Searching…');
+    const data=await call('search',{pdb:$('pdb').value,motif:$('motif').value,rmsd:$('rmsd').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,limit:$('limit').value,cpu:$('cpu').value==='cpu',
+      // Several databases are one per line, as the notebook's path field accepts them.
+      index:[...picked.filter(db=>!db.blob).map(db=>db.url),other].filter(Boolean).join('\n'),
+      ...(cfg.indexFile?{index_files:picked.filter(db=>db.blob).map(db=>db.blob)}:{})});
+    if(data.error)throw Error(data.error);
+    rows=data.rows;download=data.download;scene=null;
+    $('scenePanel').hidden=$('sceneTools').hidden=$('view').hidden=true;view(false);
+    listHits();$('results').hidden=false;document.body.classList.add('has-hits');
+    const targets=new Set(rows.map(row=>(row.source_index||'')+'\n'+row.target_id)).size;
+    $('resultSummary').textContent=rows.length.toLocaleString()+(rows.length===1?' placement':' placements')+' · '+targets.toLocaleString()+(targets===1?' target':' targets');
+    $('log').textContent=data.log;
+    status('Search finished in '+data.elapsed.toFixed(3)+' s'+(data.engine?' on '+data.engine:'')+'. '+(rows.length?'Select a hit to view it.':'No placements passed these settings.'));
+  }catch(e){status(e.message,true);}
+  finally{busy=false;$('search').disabled=false;}
+}
 if(cfg.subtitle)$('subtitle').textContent=cfg.subtitle;
 if(cfg.indexLabel)$('indexLabel').textContent=cfg.indexLabel;
 if(cfg.indexHint)$('indexHint').textContent=cfg.indexHint;
 if(cfg.indexPlaceholder)$('index').placeholder=cfg.indexPlaceholder;
-if(cfg.indexFile){$('indexFileRow').hidden=false;$('indexFile').onchange=e=>{const file=e.target.files[0];$('indexFileName').textContent=file?file.name+' · '+(file.size/1048576).toFixed(1)+' MiB':'';};}
-if(cfg.ready)$('status').textContent=cfg.ready;
-$('pdb').value=cfg.pdb;$('preview').onclick=preview;$('motif').oninput=highlight;
-$('upload').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(file.size>20_000_000){status('Upload a PDB smaller than 20 MB.',true);return;}$('pdb').value=await file.text();$('fileName').textContent=file.name;$('motif').value='';$('chemistryPositions').value='';preview();};
-$('example').onclick=()=>{$('pdb').value=cfg.pdb;$('motif').value='B56-58,B101-103,C194-196';$('chemistryPositions').value='B57,B102,C195';$('fileName').textContent='Example: serine-protease motif.';preview();};
-$('search').onclick=async()=>{if(busy)return;busy=true;$('search').disabled=true;status('Searching…');$('scenePanel').hidden=true;try{const data=await call('search',{pdb:$('pdb').value,motif:$('motif').value,index:$('index').value,rmsd:$('rmsd').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,limit:$('limit').value,cpu:$('cpu').value==='cpu',...(cfg.indexFile?{index_file:$('indexFile').files[0]}:{})});if(data.error)throw Error(data.error);rows=data.rows;download=data.download;$('hits').replaceChildren();rows.forEach((row,i)=>{const tr=document.createElement('tr');for(const value of [row.target_id,Number(row.rmsd).toFixed(3),String(row.seg_len).split(/[,;]/).reduce((n,x)=>n+Number(x),0)]){const td=document.createElement('td');td.textContent=value;tr.appendChild(td);}const td=document.createElement('td'),button=document.createElement('button');button.textContent='VIEW';button.onclick=()=>showScene(i);td.appendChild(button);tr.appendChild(td);$('hits').appendChild(tr);});$('results').hidden=false;$('resultSummary').textContent=rows.length+' retained placements · '+new Set(rows.map(r=>r.target_id)).size+' targets';$('log').textContent=data.log;status('Search finished in '+data.elapsed.toFixed(3)+' s'+(data.engine?' on '+data.engine:'')+'. '+(rows.length?'Select VIEW to inspect a hit.':'No placements passed these settings.'));}catch(e){status(e.message,true);}finally{busy=false;$('search').disabled=false;}};
+if(databases.length){$('databases').hidden=false;$('indexOther').className='';$('indexOther').open=false;listDatabases();}
+if(cfg.indexFile){
+  $('indexFileRow').hidden=false;
+  $('indexFile').onchange=e=>{
+    const files=[...e.target.files];
+    for(const file of files){
+      // A file saved from the list takes its place there; any other file is a database of its own.
+      const listed=databases.find(db=>db.file===file.name);
+      if(listed)Object.assign(listed,{blob:file,checked:true});
+      else databases.unshift({name:file.name,bytes:file.size,blob:file,checked:true});
+    }
+    if(files.length)for(const db of databases)if(db.example)db.checked=false;
+    $('indexFileName').textContent=files.map(file=>file.name+' · '+(file.size/1048576).toFixed(1)+' MiB').join(', ');
+    e.target.value='';$('databases').hidden=false;listDatabases();
+  };
+}
+status(ready);
+$('source').append(...queries.map((query,i)=>new Option(query.label,i)));
+$('source').value=String(cfg.query||0);$('source').onchange=()=>loadQuery(Number($('source').value));
+$('upload').onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  if(file.size>20_000_000){status('Upload a PDB smaller than 20 MB.',true);return;}
+  const i=queries.push({label:file.name,pdb:await file.text(),motif:'',chemistry_positions:'',chemistry:$('chemistry').value})-1;
+  $('source').append(new Option(file.name,i));$('source').value=String(i);e.target.value='';loadQuery(i);
+};
+$('index').oninput=()=>{if($('index').value.trim())dropExample();};
+$('preview').onclick=preview;$('motif').oninput=$('chemistryPositions').oninput=highlight;
+$('chemistry').onchange=()=>{gate();highlight();};
+$('search').onclick=search;
+$('hits').onkeydown=e=>{
+  const step=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0,row=e.target.closest('tr')?.[step>0?'nextElementSibling':'previousElementSibling'];
+  if(step&&row){e.preventDefault();row.querySelector('button').focus();row.click();}
+};
 $('download').onclick=()=>save('jmfs_matches.tsv',download);$('downloadScene').onclick=()=>scene&&save(scene.name,scene.cif);
 $('whole').onclick=()=>frameScene('target');$('wholeQuery').onclick=()=>frameScene('query');$('focus').onclick=()=>frameScene('',true);
+$('viewQuery').onclick=()=>view(false);$('viewHit').onclick=()=>view(true);
 for(const id of ['showQuery','showTarget','motifOnly'])$(id).onchange=contextStyle;
-new ResizeObserver(()=>{queryViewer?.resize();resultViewer?.resize();}).observe(document.querySelector('main'));
-preview();
+new ResizeObserver(resize).observe($('queryViewer'));new ResizeObserver(resize).observe($('resultViewer'));
+wide.addEventListener('change',arrange);arrange();
+loadQuery(Number($('source').value));
 })();
 </script></body></html>

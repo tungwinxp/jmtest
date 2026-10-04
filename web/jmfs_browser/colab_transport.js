@@ -3,6 +3,9 @@
 // two calls with local search workers, so the shared Rust core runs on this computer's WebGPU
 // adapter or, without one, on WASM CPU workers. Nothing is uploaded.
 
+// Databases kept resident on the device at once; each has its own worker and device budget.
+const GPU_LANES = 2;
+
 // One kept worker. A failed or cancelled request replaces it.
 class Lane {
   constructor(workerUrl) {
@@ -41,14 +44,18 @@ class Lane {
 const compareRows = (a, b) => a.rmsd - b.rmsd || a.targetId.localeCompare(b.targetId)
   || a.starts.join(",").localeCompare(b.starts.join(","));
 
+const sourceLabel = (index) => (index.kind === "file" ? index.file.name : index.url);
+const sourceIdentity = ({ kind, file, url }) => (kind === "file"
+  ? `file\0${file.name}\0${file.size}\0${file.lastModified}` : `url\0${url}`);
+
 export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cpuLaneCount }) {
   const wasmModule = fetch(wasmUrl).then((response) => {
     if (!response.ok) throw new Error(`JMFS WASM fetch failed (${response.status})`);
     return response.arrayBuffer();
   }).then((bytes) => WebAssembly.compile(bytes));
-  // The GPU lane keeps the database resident between searches, like the notebook's resident
+  // A GPU lane keeps its database resident between searches, like the notebook's resident
   // workers. CPU scans are split over several lanes, one contiguous target range at a time.
-  const gpuLane = new Lane(workerUrl);
+  const gpuLanes = [];
   const cpuLanes = [];
   // Each lane holds its own copy of the index metadata, so the default follows device memory.
   const cpuLaneLimit = cpuLaneCount >= 1 ? Math.trunc(cpuLaneCount)
@@ -76,7 +83,18 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
     return undefined;
   });
 
+  // The lane that last searched this database, else a new one, else the least recently used.
+  function gpuLaneFor(index) {
+    const identity = sourceIdentity(index);
+    let at = gpuLanes.findIndex((kept) => kept.identity === identity);
+    if (at < 0 && gpuLanes.length < GPU_LANES) at = gpuLanes.push({ lane: new Lane(workerUrl) }) - 1;
+    const [kept] = gpuLanes.splice(Math.max(at, 0), 1);
+    gpuLanes.push(Object.assign(kept, { identity }));
+    return kept.lane;
+  }
+
   async function searchGpu(request, progress) {
+    const gpuLane = gpuLaneFor(request.index);
     const run = () => searchOn(gpuLane, request, (data) => progress(data.type === "chunk"
       ? `Searching… ${data.targetsDone.toLocaleString()} of ${
         data.targetsTotal.toLocaleString()} targets · ${data.hits.toLocaleString()} retained`
@@ -84,7 +102,7 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
     const kept = Boolean(gpuLane.worker);
     try {
       // A kept engine may have lost its device since the last search; start once more, fresh.
-      return await run().catch((error) => { if (kept) return run(); throw error; });
+      return { ...await run().catch((error) => { if (kept) return run(); throw error; }), lane: gpuLane };
     } catch (error) {
       // Without a working device the worker refuses a large single-worker CPU scan.
       if (!/WebGPU/.test(error.message)) throw error;
@@ -132,7 +150,7 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
         stats[key] = typeof value === "number" ? (stats[key] || 0) + value : value;
       }
     }
-    return { ...results[0], rows, stats, backend: `WASM CPU × ${lanes}` };
+    return { ...results[0], rows, stats, backend: `WASM CPU × ${lanes}`, lane: cpuLanes[0] };
   }
 
   async function search(payload, progress) {
@@ -155,15 +173,20 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
     if (!(matchLimit >= 1 && matchLimit <= 10000)) {
       throw new Error("Choose between 1 and 10,000 retained hits.");
     }
-    const indexText = String(payload.index || "").trim();
-    const index = payload.index_file
-      ? { kind: "file", file: payload.index_file }
-      : { kind: "url", url: new URL(indexText || demoIndexUrl, location.href).href };
+    // Addresses arrive one per line, as the notebook takes paths; chosen files arrive beside them.
+    const sources = [
+      ...String(payload.index || "").split(/[\n;]/).map((line) => line.trim()).filter(Boolean)
+        .map((address) => ({ kind: "url", url: new URL(address, location.href).href })),
+      ...(payload.index_files || []).map((file) => ({ kind: "file", file })),
+    ];
+    if (!sources.length) sources.push({ kind: "url", url: new URL(demoIndexUrl, location.href).href });
+    if (new Set(sources.map(sourceIdentity)).size !== sources.length) {
+      throw new Error("Each target index must be listed only once.");
+    }
     // The form's CPU choice, or a browser without WebGPU, scans on the CPU however large the
     // database is; the status line shows progress.
     const onCpu = Boolean(payload.cpu) || !(await adapterReady);
-    const request = {
-      index,
+    const base = {
       pdbText,
       motif,
       chemistryMode,
@@ -177,52 +200,69 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
       wasmModule: await wasmModule,
     };
     const started = performance.now();
-    const result = await (onCpu ? searchCpu : searchGpu)(request, progress);
+    // One database at a time; the hit limit then applies across all of them.
+    const searches = [];
+    for (const [at, index] of sources.entries()) {
+      const request = { ...base, index };
+      const report = sources.length === 1 ? progress
+        : (text) => progress(`Database ${at + 1} of ${sources.length} · ${text}`);
+      searches.push({ request, result: await (onCpu ? searchCpu : searchGpu)(request, report) });
+    }
     const elapsed = (performance.now() - started) / 1000;
-    const segLen = result.rows.length
-      ? result.rows[0].positions.map((positions) => {
+    const several = sources.length > 1;
+    const found = searches.flatMap((search, source) => search.result.rows.map((row) => ({ ...row, source })))
+      .sort((a, b) => compareRows(a, b) || a.source - b.source).slice(0, matchLimit);
+    const segLen = found.length
+      ? found[0].positions.map((positions) => {
         const [first, end] = positions.split("-").map(Number);
         return end - first + 1;
       }).join(",")
       : "";
-    const rows = result.rows.map((row) => ({
+    const rows = found.map((row) => ({
       query_id: "query",
       target_id: row.targetId,
       seg_beg: row.starts.join(","),
       seg_len: segLen,
       rmsd: String(row.rmsd),
       seqout: row.targetSequence,
+      ...(several ? { source_index: sourceLabel(sources[row.source]) } : {}),
     }));
-    const fields = ["query_id", "target_id", "seg_beg", "seg_len", "rmsd", "seqout"];
+    const fields = ["query_id", "target_id", "seg_beg", "seg_len", "rmsd", "seqout",
+      ...(several ? ["source_index"] : [])];
     const download = [fields, ...rows.map((row) => fields.map((field) => row[field]))]
       .map((values) => values.map((value) => String(value).replace(/[\t\r\n]/g, " ")).join("\t"))
       .join("\n") + "\n";
-    const adapter = result.adapterInfo?.description || "";
-    const engine = result.backend === "WebGPU" ? `WebGPU${adapter ? ` (${adapter})` : ""}` : result.backend;
-    const { stats } = result;
+    const engineOf = (result) => {
+      const adapter = result.adapterInfo?.description || "";
+      return result.backend === "WebGPU" ? `WebGPU${adapter ? ` (${adapter})` : ""}` : result.backend;
+    };
+    const engine = [...new Set(searches.map((search) => engineOf(search.result)))].join(", ");
     const log = [
-      `engine=${engine}`,
-      stats.fallbackReason ? `gpu_fallback=${stats.fallbackReason}` : "",
-      `index=${result.index.label}`,
-      `target_count=${result.index.targets}`,
-      `residue_count=${result.index.residues}`,
-      `windows_checked=${Math.round(stats.windows || 0)}`,
-      `chunks=${stats.chunks}`,
-      `resident_chunks=${stats.residentChunks || 0}`,
-      `resident_device_bytes=${stats.residentDeviceBytes || 0}`,
-      `resident_host_bytes=${stats.residentHostBytes || 0}`,
+      ...searches.flatMap(({ result }) => [
+        `engine=${engineOf(result)}`,
+        result.stats.fallbackReason ? `gpu_fallback=${result.stats.fallbackReason}` : "",
+        `index=${result.index.label}`,
+        `target_count=${result.index.targets}`,
+        `residue_count=${result.index.residues}`,
+        `windows_checked=${Math.round(result.stats.windows || 0)}`,
+        `chunks=${result.stats.chunks}`,
+        `resident_chunks=${result.stats.residentChunks || 0}`,
+        `resident_device_bytes=${result.stats.residentDeviceBytes || 0}`,
+        `resident_host_bytes=${result.stats.residentHostBytes || 0}`,
+      ]),
       `output_rows=${rows.length}`,
       `total_sec=${elapsed.toFixed(6)}`,
     ].filter(Boolean).join("\n");
-    last = { request, rows: result.rows, lane: result.backend.startsWith("WASM CPU ×") ? cpuLanes[0] : gpuLane };
+    last = { searches, rows: found };
     return { rows, elapsed, log, download, engine };
   }
 
   async function scene(payload) {
     const row = last?.rows[Number(payload.row)];
     if (!row) throw new Error("Choose a result from the current search.");
-    const { cif, targetId, elapsedMs } = await reply(last.lane, "scene", {
-      ...last.request, targetIndex: row.targetIndex, starts: row.starts, rmsd: row.rmsd,
+    const { request, result } = last.searches[row.source];
+    const { cif, targetId, elapsedMs } = await reply(result.lane, "scene", {
+      ...request, targetIndex: row.targetIndex, starts: row.starts, rmsd: row.rmsd,
     });
     const token = targetId.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 80) || "member";
     return {
