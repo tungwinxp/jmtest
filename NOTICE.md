@@ -31,3 +31,9 @@ Copyright (c) 2025 Jianyi Yang (Shandong University). Its complete notice is in
 Protein backbone reconstruction uses the MIT-licensed PULCHRA fragment library:
 Copyright (c) 2000–2009 Piotr Rotkiewicz. The complete notice and reference
 version are in `jmfs/src/visualize/pulchra/LICENSE` and its adjacent README.
+
+RNA reconstruction is adapted from Arena by Zion R. Perry, Anna Marie Pyle and
+Chengxin Zhang, published under CC BY 4.0 at
+https://doi.org/10.5281/zenodo.18963141. The attribution, the source version
+and the changes made are in `jmfs/src/visualize/arena/LICENSE.md` and its
+adjacent README.

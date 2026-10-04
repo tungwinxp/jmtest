@@ -1,15 +1,15 @@
 // Keep the worker's static module graph coherent across cached deployments.
 // Increment this query token whenever the browser core ABI or orchestration changes.
-import { BlobRangeSource, HttpRangeSource, JmfsIndex } from "./jmfs_index.js?v=19";
-import { parsePdb, prepareQuery } from "./query.js?v=19";
-import { WasmCore } from "./wasm_core.js?v=19";
-import { WebGpuLocalFilter } from "./webgpu.js?v=19";
-import { searchChunk, cpuChunkMetadata } from "./algorithm.js?v=19";
-import { remoteFdpCandidates, RemoteFdpCatalog } from "./fdp.js?v=19";
+import { BlobRangeSource, HttpRangeSource, JmfsIndex } from "./jmfs_index.js?v=22";
+import { parsePdb, prepareQuery } from "./query.js?v=22";
+import { WasmCore } from "./wasm_core.js?v=22";
+import { WebGpuLocalFilter } from "./webgpu.js?v=22";
+import { searchChunk, cpuChunkMetadata } from "./algorithm.js?v=22";
+import { remoteFdpCandidates, RemoteFdpCatalog } from "./fdp.js?v=22";
 import {
   BROWSER_SEARCH_RELEASE, CHECKPOINT_VERSION, checkpointKey, deleteCheckpoint,
   loadCheckpoint, saveCheckpoint,
-} from "./checkpoint.js?v=19";
+} from "./checkpoint.js?v=22";
 
 let cancelled = false;
 let activeGpu = null;

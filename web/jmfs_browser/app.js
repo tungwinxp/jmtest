@@ -1,11 +1,11 @@
-import { deleteCheckpoint } from "./checkpoint.js?v=19";
+import { deleteCheckpoint } from "./checkpoint.js?v=22";
 
 const $ = (id) => document.getElementById(id);
 const form = $("search-form");
 let worker = null;
 let lastResult = null;
 let activeCheckpointKey = null;
-const wasmModule = fetch("./assets/jmfs_web_core.wasm?v=19")
+const wasmModule = fetch("./assets/jmfs_web_core.wasm?v=22")
   .then((response) => {
     if (!response.ok) throw new Error(`JMFS WASM fetch failed (${response.status})`);
     return response.arrayBuffer();
@@ -111,7 +111,7 @@ async function start(request) {
   $("discard").disabled = !activeCheckpointKey;
   $("progress").value = 0;
   setStatus("Starting", "Opening the index in one bounded worker.");
-  const runWorker = new Worker("./search_worker.js?v=19", { type: "module" });
+  const runWorker = new Worker("./search_worker.js?v=22", { type: "module" });
   worker = runWorker;
   runWorker.onmessage = ({ data }) => {
     if (worker !== runWorker) return;

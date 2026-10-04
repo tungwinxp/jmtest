@@ -1,4 +1,4 @@
-import { createWebGpuRunner } from "./wasm_core.js?v=19";
+import { createWebGpuRunner } from "./wasm_core.js?v=22";
 
 const CALL_TIMEOUT_MS = 60000;
 

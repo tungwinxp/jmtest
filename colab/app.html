@@ -91,7 +91,7 @@ body.bench{height:100dvh;overflow:hidden}
 <div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" style="background:#0072b2"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
 <div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" style="background:#d55e00"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
 <div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" style="background:#000"></i>matched query</span><span><i class="dot" style="background:#e69f00"></i>matched target</span></div>
-<div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments); RNA/DNA is not rebuilt from C4′ alone. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
+<div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments), and RNA rebuilt from indexed C4′ atoms (Arena); DNA is not rebuilt. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
 <p class="hint credit">Workflow after the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS.</p>
 </div>
 <script type="application/json" id="config">__JMFS_CONFIG__</script>
@@ -251,7 +251,11 @@ function prepareScene(secondary){
 }
 function contextStyle(){if(resultViewer)resultViewer.jmfsVisibility([...sceneChains],$('showQuery').checked,$('showTarget').checked,$('motifOnly').checked);}
 // A motif of a few residues is framed with enough of its surroundings to place it.
-function frameScene(role,match=false){resultViewer.jmfsFocus(role,match);if(match){resultViewer.zoom(.6);resultViewer.render();}}
+function frameScene(role,match=false){
+  resultViewer.jmfsFocus(role,match);
+  const size=rows[shown]?String(rows[shown].seg_len).split(/[,;]/).reduce((sum,length)=>sum+Number(length),0):0;
+  if(match&&size<=5){resultViewer.zoom(.6);resultViewer.render();}
+}
 async function showScene(i){
   if(busy)return;busy=true;$('search').disabled=true;
   try{
@@ -262,7 +266,7 @@ async function showScene(i){
     scene=data;
     resultViewer||=createViewer('resultViewer');
     resultViewer.removeAllModels();resultViewer.addModel(data.cif,'cif',{doAssembly:false,hbondCutoff:0});
-    prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();resultViewer.resize();frameScene('',true);
+    shown=i;prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();resultViewer.resize();frameScene('',true);
     const row=rows[i],accession=uniprot(row.target_id);
     $('sceneStatus').textContent=targetName(row);$('sceneStatus').title='Structure export '+(1000*data.elapsed).toFixed(1)+' ms';
     const facts=[['RMSD',Number(row.rmsd).toFixed(3)+' Å'],['Residues',residues(row).replaceAll(' ',', ')],['Sequence',String(row.seqout||'').replaceAll('/',' ')],['Database',databaseName(row)]];

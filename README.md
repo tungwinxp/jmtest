@@ -19,7 +19,8 @@ Colab notebook; here the search runs on your own computer, in the browser.
   the page sends the hits' UniProt accessions to UniProt after a search; it is
   the only request the page makes about a search.
 - Selecting a hit superposes it on the query; results and structures download
-  as TSV and mmCIF.
+  as TSV and mmCIF. Protein backbones are rebuilt from the stored Cα atoms and
+  RNA to all atoms from the stored C4′ atoms.
 
 Tested in Chrome 154 on an Apple M3 Pro. Other browsers and platforms have not
 been tested. The 3D viewer loads 3Dmol.js from its CDN and needs WebGL.
@@ -32,4 +33,7 @@ from the JMFS source repository, which is not public yet.
 
 GPL-3.0-only; see `LICENSE`, `LICENSE.md` and `NOTICE.md`. Backbone
 reconstruction uses the MIT-licensed PULCHRA fragment library
-(`jmfs/src/visualize/pulchra/LICENSE`).
+(`jmfs/src/visualize/pulchra/LICENSE`). RNA reconstruction is adapted from
+Arena by Zion R. Perry, Anna Marie Pyle and Chengxin Zhang, published under
+CC BY 4.0 at <https://doi.org/10.5281/zenodo.18963141>; the attribution and
+the changes made are in `jmfs/src/visualize/arena/`.

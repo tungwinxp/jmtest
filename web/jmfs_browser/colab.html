@@ -11,7 +11,7 @@
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=20";
+    import { createTransport } from "./colab_transport.js?v=22";
 
     const text = async (url) => {
       const response = await fetch(url);
@@ -36,8 +36,8 @@
     // either named in site.json. Otherwise the list links to the file for the user to save and add.
     const listed = async () => {
       const [sheet, site] = await Promise.all([
-        text("./assets/databases.tsv?v=20"),
-        fetch("./site.json?v=20").then((response) => (response.ok ? response.json() : {}), () => ({})),
+        text("./assets/databases.tsv?v=22"),
+        fetch("./site.json?v=22").then((response) => (response.ok ? response.json() : {}), () => ({})),
       ]);
       return sheet.trim().split("\n").slice(1).map((line) => {
         const [name, file, sheetUrl, bytes] = line.split("\t");
@@ -55,14 +55,14 @@
     };
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=21"),
-        text("../../colab/scene.js?v=21"),
+        text("../../colab/app.html?v=22"),
+        text("../../colab/scene.js?v=22"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
       window.jmfsTransport = createTransport({
-        workerUrl: new URL("./search_worker.js?v=19", import.meta.url),
-        wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=19", import.meta.url),
+        workerUrl: new URL("./search_worker.js?v=22", import.meta.url),
+        wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=22", import.meta.url),
         demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
         cpuLanes: Number(new URLSearchParams(location.search).get("cpuLanes")),

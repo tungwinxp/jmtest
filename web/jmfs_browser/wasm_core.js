@@ -1,4 +1,4 @@
-import initWebCore, { WebGpuRunner, Approximation } from "./assets/jmfs_web_core_bindings.js?v=19";
+import initWebCore, { WebGpuRunner, Approximation } from "./assets/jmfs_web_core_bindings.js?v=22";
 
 export class WasmCore {
   static async load(url = "./assets/jmfs_web_core.wasm") {
@@ -11,7 +11,7 @@ export class WasmCore {
 
   static async fromModule(module) {
     const core = new WasmCore(await initWebCore({ module_or_path: module }));
-    if (core.exports.jmfs_core_version() !== 8) {
+    if (core.exports.jmfs_core_version() !== 9) {
       throw new Error("JMFS browser core version mismatch");
     }
     return core;
@@ -250,14 +250,20 @@ export class WasmCore {
         view.setFloat32(at + 32, atom.bFactor, true);
         at += 36;
       }
-      const needed = this.exports.jmfs_scene_cif(input, length, 0, 0);
-      if (needed < 0) throw new Error(`scene export failed (${needed})`);
-      const output = this.exports.jmfs_alloc_bytes(needed);
-      try {
-        this.exports.jmfs_scene_cif(input, length, output, needed);
-        return new TextDecoder().decode(this.bytes(output, needed));
-      } finally {
-        this.exports.jmfs_dealloc_bytes(output, needed);
+      // The scene is built once: the buffer is sized for a target rebuilt to full nucleotides,
+      // and only a scene that outgrows it is built again.
+      let capacity = 65536 + 110 * (atoms.length + 23 * targetSeq.length);
+      for (;;) {
+        const size = capacity;
+        const output = this.exports.jmfs_alloc_bytes(size);
+        try {
+          const needed = this.exports.jmfs_scene_cif(input, length, output, size);
+          if (needed < 0) throw new Error(`scene export failed (${needed})`);
+          if (needed <= size) return new TextDecoder().decode(this.bytes(output, needed));
+          capacity = needed;
+        } finally {
+          this.exports.jmfs_dealloc_bytes(output, size);
+        }
       }
     } finally {
       this.exports.jmfs_dealloc_bytes(input, length);

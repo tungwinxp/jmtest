@@ -1,4 +1,4 @@
-import { HttpRangeSource } from "./jmfs_index.js?v=19";
+import { HttpRangeSource } from "./jmfs_index.js?v=22";
 
 const CATALOG_MAGIC = "JMFSRFC1";
 const CATALOG_VERSION = 1;
