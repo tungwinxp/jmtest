@@ -30,14 +30,11 @@
       { label: "α-Chymotrypsin catalytic triad", url: here("../../benchmarks/manuscript_rebench/queries/4CHA.pdb"),
         motif: "B57,B102,C195", chemistry_positions: "B57,B102,C195", chemistry: "exact" },
     ];
-    // The notebook's index sheet (Species, Filename, URL), kept here as a dated copy with sizes.
-    // Google Drive refuses a page's own request for a file, so a listed database is searched in
-    // place only through a mirror that serves byte ranges or the Drive API with a browser key,
-    // either named in site.json. Otherwise the list links to the file for the user to save and add.
+    // The notebook's index sheet; the R2 mirror serves bounded range reads and streamed downloads.
     const listed = async () => {
       const [sheet, site] = await Promise.all([
-        text("./assets/databases.tsv?v=22"),
-        fetch("./site.json?v=22").then((response) => (response.ok ? response.json() : {}), () => ({})),
+        text("./assets/databases.tsv?v=23"),
+        fetch("./site.json?v=23", { cache: "no-cache" }).then((response) => (response.ok ? response.json() : {}), () => ({})),
       ]);
       return sheet.trim().split("\n").slice(1).map((line) => {
         const [name, file, sheetUrl, bytes] = line.split("\t");
@@ -50,12 +47,13 @@
           : site.driveKey && id
             ? `https://www.googleapis.com/drive/v3/files/${id}?alt=media&key=${encodeURIComponent(site.driveKey)}`
             : undefined;
-        return { name, file, get, bytes: Number(bytes), url };
+        const downloadUrl = site.mirror && url ? `${url}?download=1` : undefined;
+        return { name, file, get, bytes: Number(bytes), url, downloadUrl };
       });
     };
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=22"),
+        text("../../colab/app.html?v=23"),
         text("../../colab/scene.js?v=22"),
         listed(),
       ]);
@@ -87,7 +85,7 @@
         indexHint: catalog.some((database) => !database.url)
           ? "Get file downloads from Google Drive; add the saved file here. "
             + "Files are read in place; nothing is uploaded."
-          : "Files are read in place and nothing is uploaded.",
+          : "Select a database to read it directly. Save index downloads a copy to your browser’s download folder. Nothing is uploaded.",
         ready: "Ready.",
       };
       const html = template

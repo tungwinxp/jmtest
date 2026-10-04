@@ -193,6 +193,7 @@ function listDatabases(){
     if(db.blob)sourceNames.set(db.blob.name,db.name);
     const row=make('label',{title:db.file||db.name},input,make('span',{className:'name',textContent:db.name}));
     if(db.bytes)row.append(make('span',{className:'data',textContent:megabytes(db.bytes)}));
+    if(db.downloadUrl)row.append(make('a',{href:db.downloadUrl,download:db.file||'',textContent:'Save index',title:'Save '+db.name+' to your download folder'}));
     if(input.disabled&&db.get)row.append(make('a',{href:db.get,target:'_blank',rel:'noopener noreferrer',textContent:'Get file'}));
     return row;
   }));

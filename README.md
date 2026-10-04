@@ -7,11 +7,11 @@ Colab notebook; here the search runs on your own computer, in the browser.
 
 - Pick a built-in query or upload a PDB, click residues in the figure or type
   them to set the motif, press **Search**.
-- Tick databases in the list. The listed databases live on Google Drive, which
-  does not let a web page read them directly: **Get file** downloads one, and
-  **Add .jmfsgeom files** adds the saved file, which is read in place; nothing
-  is uploaded. Any other `.jmfsgeom` file can be added the same way. The first
-  row is a two-structure example.
+- Tick databases in the list to search them directly from the public R2 mirror.
+  **Save index** streams a copy to your browser’s download folder. There is no
+  Google Drive download-and-add step. **Add .jmfsgeom files** also accepts local
+  files, which are read in place; nothing is uploaded. The first row is a
+  two-structure example.
 - With a WebGPU adapter the search runs on the GPU (Metal on a Mac) and up to
   two databases stay loaded for the next search. Without one, or with **CPU**
   selected, it runs on WebAssembly CPU workers.
