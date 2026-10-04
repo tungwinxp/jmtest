@@ -5,13 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>JMFS structure search</title>
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+  <style>
+    body{margin:0;background:#fff;color:#202124;font:13px/1.45 system-ui,sans-serif}
+    #intro{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+    #intro>div{max-width:520px;text-align:center}#intro p{margin:0 0 24px;line-height:1.65}
+    #introLogo{display:block;width:80px;height:auto;margin:0 auto 24px}
+    #intro .actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+    #intro button{height:36px;padding:0 16px;border:1px solid #dadce0;border-radius:6px;background:#f8f9fa;color:#202124;font:13px system-ui;cursor:pointer}
+    #intro button:hover{background:#e8f0fe}#intro button:focus-visible{outline:2px solid #1967d2;outline-offset:2px}
+  </style>
 </head>
 <body>
-  <p id="boot" style="font:13px system-ui,sans-serif;padding:16px">Loading the JMFS interface…</p>
+  <main id="intro"><div><img id="introLogo" src="./assets/logo.svg" alt="JumpMASTER"><p id="introText">JumpMASTER finds similar structural motifs in protein and nucleic acid databases. Computation runs locally on your computer. Models, structures, and database data download when needed, then stay cached locally in your browser. Continue to the workbench, or enable the Local AI Guide for help preparing searches and interpreting your results.</p><div class="actions"><button id="next">Next</button><button id="enableGuide">Enable the Local AI Guide</button></div><p id="boot" role="status" style="margin-top:12px"></p></div></main>
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
     import { createTransport } from "./colab_transport.js?v=22";
+    import {fetchStructure} from './structure.js';
+    import {savedIndexes,rememberIndex} from './range_cache.js';
 
     const text = async (url) => {
       const response = await fetch(url);
@@ -51,15 +62,24 @@
         return { name, file, get, bytes: Number(bytes), url, downloadUrl };
       });
     };
+    async function start(enableGuide=false){
+    document.getElementById('boot').textContent='Loading the JMFS interface…';
+    document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
+    if(!crossOriginIsolated&&'serviceWorker' in navigator){
+      try{
+        await navigator.serviceWorker.register('./isolate.js',{scope:'./'});await navigator.serviceWorker.ready;
+        if(!sessionStorage.getItem('jmfs-isolation-reload')){sessionStorage.setItem('jmfs-isolation-reload',enableGuide?'guide':'workbench');location.reload();return;}
+      }catch(error){console.warn('Guide isolation unavailable',error);}
+    }
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=23"),
+        text("../../colab/app.html?v=24"),
         text("../../colab/scene.js?v=22"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
       window.jmfsTransport = createTransport({
-        workerUrl: new URL("./search_worker.js?v=22", import.meta.url),
+        workerUrl: new URL("./search_worker.js?v=24", import.meta.url),
         wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=22", import.meta.url),
         demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
@@ -88,6 +108,13 @@
           : "Select a database to read it directly. Save index downloads a copy to your browser’s download folder. Nothing is uploaded.",
         ready: "Ready.",
       };
+      window.jmfsSavedIndexes=await savedIndexes();
+      for(const file of window.jmfsSavedIndexes){
+        const listed=config.databases.find(db=>db.file===file.name);
+        if(!listed)config.databases.push({name:file.name,file:file.name,bytes:file.size});
+      }
+      window.jmfsRememberIndex=rememberIndex;
+      window.jmfsFetchStructure=fetchStructure;
       const html = template
         .replace("__JMFS_CONFIG__", () => JSON.stringify(config).replaceAll("<", "\\u003c"))
         .replace("__JMFS_SCENE_JS__", () => sceneJs);
@@ -107,9 +134,25 @@
         document.body.append(script);
         await loaded?.catch(() => {});
       }
+      document.getElementById('pdbLookup').hidden=false;
+      document.getElementById('loadPdb').onclick=async()=>{
+        const button=document.getElementById('loadPdb');button.disabled=true;
+        try{const structure=await fetchStructure(document.getElementById('pdbId').value,document.getElementById('pdbChain').value);await window.jmfsGuideApi.loadStructure(structure);}
+        catch(error){document.getElementById('status').textContent=error.message;}
+        finally{button.disabled=false;}
+      };
+      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css');document.head.append(style);
+      const {mountGuide}=await import('./ai/assistant.js');
+      const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
+      window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {
-      document.getElementById("boot").textContent = `The JMFS interface could not start: ${error.message}`;
+      const status=document.getElementById('boot')||document.getElementById('status');status.textContent=`The JMFS interface could not start: ${error.message}`;
     }
+    }
+    document.getElementById('next').onclick=()=>start(false);
+    document.getElementById('enableGuide').onclick=()=>start(true);
+    const resume=sessionStorage.getItem('jmfs-isolation-reload');
+    if(resume){sessionStorage.removeItem('jmfs-isolation-reload');start(resume==='guide');}
   </script>
 </body>
 </html>

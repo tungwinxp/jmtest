@@ -1,4 +1,7 @@
+import {isCif,cifAtoms} from './structure.js';
+
 export function parsePdb(text, core) {
+  if(isCif(text))return parseCif(text,core);
   const residues = [];
   const byKey = new Map();
   let sourceRun = 0;
@@ -48,6 +51,36 @@ export function parsePdb(text, core) {
     });
   }
   if (!anchors.length) throw new Error("Query PDB has no protein CA or nucleotide C4' anchors");
+  return anchors;
+}
+
+function parseCif(text,core){
+  const residues=new Map();let model;
+  for(const row of cifAtoms(text)){
+    const rowModel=row.pdbx_PDB_model_num||'1';model??=rowModel;if(rowModel!==model)continue;
+    if(!['ATOM','HETATM'].includes(row.group_PDB))continue;
+    if(!['.','?','A',undefined].includes(row.label_alt_id))continue;
+    const known=value=>value!==undefined&&value!=='.'&&value!=='?';
+    const chain=known(row.auth_asym_id)?row.auth_asym_id:row.label_asym_id;
+    const seq=known(row.auth_seq_id)?row.auth_seq_id:row.label_seq_id;
+    const resSeq=Number(seq);if(!Number.isInteger(resSeq))continue;
+    const insertion=known(row.pdbx_PDB_ins_code)?row.pdbx_PDB_ins_code:' ';
+    const resName=known(row.auth_comp_id)?row.auth_comp_id:row.label_comp_id;
+    const atom=(known(row.auth_atom_id)?row.auth_atom_id:row.label_atom_id).replace('*',"'");
+    const xyz=[row.Cartn_x,row.Cartn_y,row.Cartn_z].map(Number);if(xyz.some(v=>!Number.isFinite(v)))continue;
+    const sourceRun=row.label_asym_id,key=[sourceRun,chain,resSeq,insertion,resName].join('\0');
+    let residue=residues.get(key);
+    if(!residue){residue={sourceRun,chain,resSeq,insertion,resName,atoms:new Map(),bFactors:new Map()};residues.set(key,residue);}
+    if(!residue.atoms.has(atom)){residue.atoms.set(atom,xyz);residue.bFactors.set(atom,Number(row.B_iso_or_equiv)||0);}
+  }
+  const runIds=new Map(),anchors=[];
+  for(const residue of residues.values()){
+    const protein=residue.atoms.has('CA')&&!residue.atoms.has("C4'"),coord=residue.atoms.get(protein?'CA':"C4'");
+    if(!coord)continue;
+    if(!runIds.has(residue.sourceRun))runIds.set(residue.sourceRun,runIds.size);
+    anchors.push({...residue,sourceRun:runIds.get(residue.sourceRun),coord,code:core.residueCode(residue.resName,protein)});
+  }
+  if(!anchors.length)throw Error("Query mmCIF has no protein CA or nucleotide C4' anchors");
   return anchors;
 }
 

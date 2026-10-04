@@ -1,3 +1,4 @@
+import {rangeCache} from './range_cache.js';
 const HEADER_LENGTH = 64;
 const SECTION_LENGTH = 32;
 const DIR_LENGTH = 56;
@@ -75,6 +76,8 @@ export class HttpRangeSource {
     this.size = null;
     this.whole = null;
     this.maxWholeFetch = maxWholeFetch;
+    this.persistent=null;
+    this.cacheStats={hits:0,misses:0,savedBytes:0};
   }
 
   async read(offset, length) {
@@ -86,14 +89,24 @@ export class HttpRangeSource {
     }
     if (length === 0) return new Uint8Array();
     if (this.whole) return this.whole.slice(offset, offset + length);
+    this.persistent??=rangeCache(this.url);
+    const persistent=await this.persistent;
+    if(persistent){
+      this.size=persistent.size;
+      if(offset+length>this.size)throw new Error(`index read is outside ${this.label}`);
+      const cached=await persistent.read(offset,length).catch(()=>null);
+      if(cached?.length===length){this.cacheStats.hits++;return cached;}
+    }
+    this.cacheStats.misses++;
     const response = await fetch(this.url, {
       headers: { Range: `bytes=${offset}-${offset + length - 1}` },
-      cache: "force-cache",
+      cache: persistent ? "no-store" : "force-cache",
     });
     if (!(response.status === 206 || response.status === 200)) {
       throw new Error(`index range request failed (${response.status})`);
     }
     if (response.status === 206) {
+      if(persistent&&response.headers.get('etag')&&response.headers.get('etag')!==persistent.etag){await response.body?.cancel();throw new Error('The remote index changed during this search. Start a new search to use its new version.');}
       const contentRange = response.headers.get("content-range") || "";
       const match = contentRange.match(/bytes\s+(\d+)-(\d+)\/(\d+)/i);
       if (match && (Number(match[1]) !== offset || Number(match[2]) !== offset + length - 1)) {
@@ -111,6 +124,7 @@ export class HttpRangeSource {
       }
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (bytes.length !== length) throw new Error(`short HTTP range: ${bytes.length} of ${length}`);
+      if(persistent)await persistent.write(offset,bytes).then(()=>{this.cacheStats.savedBytes+=bytes.length;},()=>{});
       return bytes;
     }
     const contentLength = Number(response.headers.get("content-length") || 0);
