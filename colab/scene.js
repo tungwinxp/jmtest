@@ -1,4 +1,7 @@
 // Shared molecular rendering for the native notebook and optional HTML form.
+// Brighter variants of the user's Ghibli palette, reserved for structures.
+function jmfsChainColor(index){return globalThis.jmfsColors?.chains?.[index%4]||['#f29bb0','#b7d69e','#f07f67','#a7b978'][index%4];}
+function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#c83d6f',chemistry:'#c83d6f',targetMatch:'#4f7e4a'}[name];}
 function installJMFSScene(viewer, secondary, chainNames={}) {
   const atoms=viewer.getModel().selectedAtoms({});
   const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
@@ -72,9 +75,10 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     clearHover();
     enabled=new Set(chains);showQuery=query;showTarget=target;motifOnly=motif;
     viewer.setStyle({},{});
-    for(const [role,color,opacity] of [['query','#0072B2',.72],['target','#D55E00',.72]]){
-      viewer.setStyle({predicate:a=>visible(a)&&a.chain.startsWith(role+'_')&&!isMatch(a)}, {cartoon:{arrows:true,color,opacity}});
-      const motifColor=role==='query'?'#000000':'#E69F00';
+    for(const [role,offset,opacity] of [['query',0,.85],['target',1,.85]]){
+      const chains=[...new Set(atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)).map(a=>a.chain))].sort();
+      chains.forEach((chain,index)=>viewer.setStyle({predicate:a=>visible(a)&&a.chain===chain}, {cartoon:{arrows:true,color:jmfsChainColor(index+offset),opacity}}));
+      const motifColor=jmfsColor(role+'Match');
       viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.18:.35},sphere:{color:motifColor,radius:role==='query'?.23:.36}});
     }
     viewer.render();

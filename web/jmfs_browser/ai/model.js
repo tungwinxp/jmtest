@@ -2,17 +2,35 @@ export const MODEL={revision:'fff685b81430bd58e703547bb6014f7b5d482f48',file:'Qw
 export const MODEL_URL=`https://huggingface.co/TheStageAI/Qwen3.5-0.8B-GGUF/resolve/${MODEL.revision}/${MODEL.file}`;
 export const GEMMA={revision:'57cbf0912db499cff5cc9cf0d800c2247c49e376',file:'gemma-4-E2B-it-XS-TS-Q3_K_S.gguf',bytes:1733114080,sha256:'d1e358e0a9f945084e8757090684ef698f9e99f41693dcd465f5aeaa3564c3b5'};
 export const GEMMA_URL=`https://huggingface.co/TheStageAI/gemma-4-E2B-it-GGUF/resolve/${GEMMA.revision}/${GEMMA.file}`;
-export async function metalAvailable(){
+export function supportedGuideGpu(info,memory=8){
+  const vendor=String(info?.vendor||'').toLowerCase(),architecture=String(info?.architecture||'').toLowerCase();
+  return Boolean(info&&!info.isFallbackAdapter&&memory>=8&&((vendor==='apple'&&architecture.startsWith('metal'))||vendor.includes('nvidia')));
+}
+export async function guideGpuAvailable(){
   const adapter=await navigator.gpu?.requestAdapter().catch(()=>null);
-  return Boolean(adapter&&!adapter.info.isFallbackAdapter&&adapter.info.vendor==='apple'&&adapter.info.architecture.startsWith('metal')&&(navigator.deviceMemory??8)>=8);
+  return supportedGuideGpu(adapter?.info,navigator.deviceMemory??8);
 }
 export async function loadLocalModel(progress,signal,url=MODEL_URL,options={}){
   const {Wllama}=await import('./assets/vendor.js');
   const {runtime={},...loadOptions}=options;
   const llm=new Wllama({default:new URL('./assets/wllama.wasm',import.meta.url).href},{suppressNativeLog:true,allowOffline:true,...runtime});
+  const {resumable,backgroundDownloads,prepareDownload,runDownload,progressText}=await import('../downloads.js?v=25');
+  const started=performance.now();let initial;
+  const report=({loaded,total,etaMs})=>{
+    initial??=loaded;
+    const moved=loaded-initial;
+    etaMs??=moved>0?(total-loaded)*(performance.now()-started)/moved:NaN;
+    progress(total?`Loading local guide · ${progressText(loaded,total,etaMs)}`:'Loading local guide…',{loaded,total,etaMs});
+  };
   try{
-    await llm.loadModelFromUrl(url,{n_ctx:8192,n_parallel:1,n_batch:256,n_ubatch:64,n_gpu_layers:0,n_threads:Math.max(1,Math.min(8,(navigator.hardwareConcurrency??4)-1)),jinja:true,default_template_kwargs:{enable_thinking:false},signal,
-      progressCallback:({loaded,total})=>progress(total?`Loading local guide · ${Math.round(100*loaded/total)}%`:'Loading local guide…'),...loadOptions});
+    const available=navigator.hardwareConcurrency||4,threads=Math.trunc(Number(localStorage.getItem('jmfs-cpu-cores')))||Math.min(8,available-1);
+    const params={n_ctx:8192,n_parallel:1,n_batch:256,n_ubatch:64,n_gpu_layers:0,n_threads:Math.max(1,Math.min(available,threads)),jinja:true,default_template_kwargs:{enable_thinking:false},signal,progressCallback:report,...loadOptions};
+    const cached=await llm.cacheManager.open(url),pin=url===GEMMA_URL?GEMMA:MODEL;
+    if(resumable()&&(!cached||cached.size!==pin.bytes)){
+      const job=await prepareDownload({url,name:pin.file,bytes:pin.bytes,kind:'model',immutable:true});
+      const file=await runDownload(job,{signal,onProgress:report,background:backgroundDownloads()});
+      signal?.throwIfAborted();progress('Preparing the cached local guide…');await llm.loadModel([file],params);
+    }else await llm.loadModelFromUrl(url,params);
     return llm;
   }catch(error){await llm.exit().catch(()=>{});throw error;}
 }

@@ -1,4 +1,5 @@
 .guide h2{margin:0}.guide>.bar{justify-content:space-between}.guide #guideBody{margin-top:12px}
+.guide>.bar{border:1px solid var(--hairline);border-radius:6px;padding:10px}
 .guide .toggle{display:flex;align-items:center;gap:6px;margin:12px 0 6px;color:var(--ink)}
 #guideMessages{max-height:240px;overflow-y:auto;margin:12px 0;display:flex;flex-direction:column;gap:8px}
 #guideMessages p{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0;border-bottom:1px solid var(--hairline)}

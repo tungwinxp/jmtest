@@ -9,7 +9,7 @@ import { remoteFdpCandidates, RemoteFdpCatalog } from "./fdp.js?v=22";
 import {
   BROWSER_SEARCH_RELEASE, CHECKPOINT_VERSION, checkpointKey, deleteCheckpoint,
   loadCheckpoint, saveCheckpoint,
-} from "./checkpoint.js?v=22";
+} from "./checkpoint.js?v=25";
 
 let cancelled = false;
 let activeGpu = null;
@@ -115,13 +115,14 @@ async function run(request) {
       || !(range[0] >= 0 && range[0] < range[1] && range[1] <= index.targetCount))) {
     throw new Error("targetRange needs a non-empty database range without FDP or approximation");
   }
-  let checkpointEnabled = request.checkpoint !== false && !range;
+  let checkpointEnabled = request.checkpoint !== false;
   let checkpointWarning = "";
   if (checkpointEnabled) {
     try {
       checkpoint = await prepareCheckpoint(index, source, request, {
         rmsdCut, matchLimit, frontierCap, fdp, approxBackend,
       });
+      self.postMessage({type:'checkpoint',key:checkpoint.key,resumed:checkpoint.resumed});
     } catch (error) {
       checkpointEnabled = false;
       checkpointWarning = error?.message || String(error);
@@ -476,7 +477,7 @@ async function run(request) {
     pendingChunk?.then((loaded) => loaded.staged?.dispose());
     approximation?.plan.free();
   }
-  if (checkpointEnabled) {
+  if (checkpointEnabled && !request.keepCheckpoint) {
     await deleteCheckpoint(checkpoint.key);
     self.postMessage({ type: "checkpoint-cleared", key: checkpoint.key });
   }
@@ -587,6 +588,7 @@ async function prepareCheckpoint(index, source, request, limits) {
     kind: "url",
     url: source.url,
     size: source.size,
+    etag: (await source.persistent)?.etag || null,
   };
   const key = await checkpointKey({
     source: sourceIdentity,
@@ -599,6 +601,8 @@ async function prepareCheckpoint(index, source, request, limits) {
     chemistryMode: request.chemistryMode || "none",
     chemistry: request.chemistry || "",
     approx: request.approx || null,
+    targetRange: request.targetRange || null,
+    backend: request.backend || 'auto',
     ...limits,
   });
   const stored = await loadCheckpoint(key);
@@ -607,7 +611,7 @@ async function prepareCheckpoint(index, source, request, limits) {
     : Uint32Array.from(stored.candidateRows);
   const candidateRowsValid = candidateRows == null || candidateRows.every((target, row) =>
     target < index.targetCount && (row === 0 || target > candidateRows[row - 1]));
-  const workTotal = candidateRows?.length ?? index.targetCount;
+  const workTotal = candidateRows?.length ?? request.targetRange?.[1] ?? index.targetCount;
   const fdpStateValid = limits.fdp
     ? stored?.fdpComplete === true
     : stored?.fdpComplete !== true && candidateRows == null;
@@ -615,7 +619,7 @@ async function prepareCheckpoint(index, source, request, limits) {
     && stored.checkpointVersion === CHECKPOINT_VERSION
     && stored.browserSearchRelease === BROWSER_SEARCH_RELEASE
     && Number.isInteger(stored.cursor)
-    && stored.cursor >= 0
+    && stored.cursor >= (request.targetRange?.[0] || 0)
     && stored.cursor <= workTotal
     && candidateRowsValid
     && fdpStateValid

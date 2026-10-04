@@ -1,5 +1,5 @@
 import {createAgent} from './agent.js';
-import {loadLocalModel,metalAvailable,GEMMA_URL} from './model.js';
+import {loadLocalModel,guideGpuAvailable,GEMMA_URL} from './model.js?v=25';
 export async function mountGuide(api,config={},enabled=false){
   const panel=document.querySelector('.panel');
   const box=document.createElement('section');box.className='group guide';
@@ -9,12 +9,16 @@ export async function mountGuide(api,config={},enabled=false){
   <div id="guideMessages" role="log" aria-live="polite" aria-label="Guide conversation"></div>
   <form id="guideForm"><label for="guideInput">What would you like to find?</label><textarea id="guideInput" maxlength="1200" rows="3" placeholder="Describe a reference motif and a target database"></textarea><p class="hint" style="margin-bottom:8px"><a id="guideExample" href="#guideInput">Insert example prompt</a></p>
   <div class="bar"><button id="guideSend" type="submit">Send</button><button id="guideStop" type="button" hidden>Stop</button><button id="guideLoad" type="button">Enable local AI · 418 MB</button></div></form>
-  <p id="guideStatus" class="status" role="status"></p><details><summary>Guide settings</summary><button id="guideGemma" hidden>Use Gemma E2B with WebGPU · 1.73 GB</button><button id="guideSmall" hidden>Use smaller CPU guide</button><p class="hint">Models and fetched database data are cached in this browser. Clearing site data removes them.</p><label for="guideMcp">RCSB MCP address</label><input id="guideMcp" type="text" placeholder="https://…/mcp" spellcheck="false"><button id="guideConnect">Use address</button><p class="hint">Query setup uses verified source annotations. PDB discovery requires a connected RCSB MCP server.</p></details></div>`;
+  <progress id="guideProgress" max="1" hidden aria-label="Local AI download progress"></progress><p id="guideStatus" class="status" role="status"></p><details><summary>Guide settings</summary><button id="guideGemma" hidden>Use Gemma E2B with WebGPU · 1.73 GB</button><button id="guideSmall" hidden>Use smaller CPU guide</button><p class="hint">Models and fetched database data are cached in this browser. Clearing site data removes them.</p><label for="guideMcp">RCSB MCP address</label><input id="guideMcp" type="text" placeholder="https://…/mcp" spellcheck="false"><button id="guideConnect">Use address</button><p class="hint">Query setup uses verified source annotations. PDB discovery requires a connected RCSB MCP server.</p></details></div>`;
   panel.querySelector('header').after(box);
-  const $=id=>document.getElementById(id),status=text=>$('guideStatus').textContent=text;
+  const $=id=>document.getElementById(id),status=(text,data)=>{
+    $('guideStatus').textContent=text;
+    if(data?.total){$('guideProgress').hidden=false;$('guideProgress').value=data.loaded/data.total;}
+    else $('guideProgress').hidden=true;
+  };
   const privateMode=()=>document.getElementById('guidePrivate').checked;
-  const metal=await metalAvailable(),preferred=localStorage.getItem('jmfs-guide-model');
-  let llm,loading,abort,loadAbort,turnBusy=false,modelKind=preferred==='small'?'small':metal?'gemma':'small',agent=createAgent(api,{...config,privateMode});
+  const gpu=await guideGpuAvailable(),preferred=localStorage.getItem('jmfs-guide-model');
+  let llm,loading,abort,loadAbort,turnBusy=false,modelKind=preferred==='small'?'small':gpu?'gemma':'small',agent=createAgent(api,{...config,privateMode});
   $('guideLoad').textContent=modelKind==='gemma'?'Enable local AI · 1.73 GB':'Enable local AI · 418 MB';
   $('guidePrivate').checked=localStorage.getItem('jmfs-guide-private')!=='off';
   $('guidePrivate').onchange=()=>localStorage.setItem('jmfs-guide-private',$('guidePrivate').checked?'on':'off');
@@ -36,7 +40,7 @@ export async function mountGuide(api,config={},enabled=false){
     return loading;
   }
   $('guideLoad').onclick=()=>enable().catch(()=>{});
-  $('guideGemma').hidden=$('guideSmall').hidden=!metal;
+  $('guideGemma').hidden=$('guideSmall').hidden=!gpu;
   $('guideGemma').onclick=()=>enable('gemma').catch(error=>status(error.message));
   $('guideSmall').onclick=()=>enable('small').catch(error=>status(error.message));
   $('guideToggle').onclick=()=>{const open=$('guideBody').hidden;$('guideBody').hidden=!open;$('guideToggle').textContent=open?'Close guide':'Open guide';$('guideToggle').setAttribute('aria-expanded',String(open));if(open)$('guideInput').focus();};

@@ -43,6 +43,12 @@ export async function deleteCheckpoint(key) {
   await transactionDone(transaction);
 }
 
+export async function listCheckpoints(prefix) {
+  const database = await openDatabase();
+  const values = await requestResult(database.transaction(STORE).objectStore(STORE).getAll());
+  return (values || []).filter(value => value.key.startsWith(prefix));
+}
+
 function openDatabase() {
   if (!globalThis.indexedDB) return Promise.reject(new Error("IndexedDB is unavailable"));
   if (!databasePromise) {

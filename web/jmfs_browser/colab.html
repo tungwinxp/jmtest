@@ -12,7 +12,7 @@
     #introLogo{display:block;width:80px;height:auto;margin:0 auto 24px}
     #intro .actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
     #intro button{height:36px;padding:0 16px;border:1px solid #dadce0;border-radius:6px;background:#f8f9fa;color:#202124;font:13px system-ui;cursor:pointer}
-    #intro button:hover{background:#e8f0fe}#intro button:focus-visible{outline:2px solid #1967d2;outline-offset:2px}
+    #intro button:hover{background:#f1f3f4}#intro button:focus-visible{outline:2px solid #3c4043;outline-offset:2px}
   </style>
 </head>
 <body>
@@ -20,7 +20,7 @@
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=22";
+    import { createTransport } from "./colab_transport.js?v=25";
     import {fetchStructure} from './structure.js';
     import {savedIndexes,rememberIndex} from './range_cache.js';
 
@@ -67,19 +67,19 @@
     document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
     if('serviceWorker' in navigator){
       try{
-        await navigator.serviceWorker.register('./isolate.js',{scope:'./',updateViaCache:'none'});await navigator.serviceWorker.ready;
+        await navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'});await navigator.serviceWorker.ready;
         if(!crossOriginIsolated&&!resume){sessionStorage.setItem('jmfs-isolation-reload',enableGuide?'guide':'workbench');location.reload();return;}
       }catch(error){console.warn('Guide isolation unavailable',error);}
     }
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=24"),
-        text("../../colab/scene.js?v=22"),
+        text("../../colab/app.html?v=25"),
+        text("../../colab/scene.js?v=25"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
       window.jmfsTransport = createTransport({
-        workerUrl: new URL("./search_worker.js?v=24", import.meta.url),
+        workerUrl: new URL("./search_worker.js?v=25", import.meta.url),
         wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=22", import.meta.url),
         demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
@@ -141,8 +141,10 @@
         catch(error){document.getElementById('status').textContent=error.message;}
         finally{button.disabled=false;}
       };
-      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css');document.head.append(style);
-      const {mountGuide}=await import('./ai/assistant.js');
+      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=25');document.head.append(style);
+      const {mountJobs}=await import('./jobs.js?v=25');
+      await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
+      const {mountGuide}=await import('./ai/assistant.js?v=25');
       const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
       window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {

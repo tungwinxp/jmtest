@@ -3,7 +3,7 @@
 <title>JMFS structure search</title>
 <style>
 /* Tokens and rules follow web/jmfs_browser/DESIGN.md. */
-:root{--primary:#1967d2;--primary-hover:#185abc;--wash:#e8f0fe;--surface:#fff;--dim:#f8f9fa;--ink:#202124;--muted:#5f6368;--hairline:#dadce0;--outline:#9aa0a6;--error:#b3261e;
+:root{--primary:#3c4043;--primary-hover:#202124;--wash:#f1f3f4;--surface:#fff;--dim:#fafafa;--ink:#202124;--muted:#5f6368;--hairline:#dadce0;--outline:#9aa0a6;--error:#b3261e;
 --sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 *{box-sizing:border-box}[hidden]{display:none!important}
 body{margin:0;overflow-x:hidden;background:var(--surface);color:var(--ink);font:13px/1.45 var(--sans)}
@@ -29,6 +29,8 @@ details{margin-top:12px}summary{cursor:pointer}details>*+*{margin-top:8px}detail
 .list label:hover{background:var(--dim)}.list label:has(:checked){background:var(--wash)}.list label:has(:disabled){cursor:default}
 .list .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.list .data{color:var(--muted)}.list a{font-size:12px}
 .status{min-height:18px;margin-top:8px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--error)}
+progress{display:block;width:100%;height:8px;margin:8px 0;accent-color:var(--primary);border:0;border-radius:6px;overflow:hidden}progress::-webkit-progress-bar{background:var(--wash)}progress::-webkit-progress-value{background:var(--primary)}progress::-moz-progress-bar{background:var(--primary)}.job-controls{display:flex;gap:8px;flex-wrap:wrap}.job-row{padding:8px 0;border-bottom:1px solid var(--hairline)}
+.color-options{position:absolute;top:8px;left:8px;z-index:5;margin:0;border:1px solid var(--hairline);border-radius:6px;background:var(--surface);max-height:90%;overflow:auto}.color-options summary{padding:5px 8px;font-size:11px;list-style:none;color:var(--ink)}.color-options[open]{padding-bottom:8px}.color-options label{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:4px 8px}.color-options input[type=color]{width:30px;height:24px;padding:0;border:1px solid var(--hairline);border-radius:4px}.color-options button{margin:4px 8px;height:24px;font-size:11px}
 figure,figcaption{display:flex;flex-direction:column;gap:8px;min-width:0}.caption{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
 .viewer{position:relative;height:340px;overflow:hidden;border:1px solid var(--hairline);border-radius:8px;background:var(--surface)}#resultViewer{height:min(62vh,640px);min-height:420px}
 dl,dd{margin:0}dl>div{display:flex;gap:6px;align-items:baseline}dd{color:var(--ink);font:12px/1.5 var(--mono);font-feature-settings:"tnum" 1}#sceneStatus{color:var(--ink);font-weight:600}
@@ -67,7 +69,7 @@ body.bench{height:100dvh;overflow:hidden}
 <div><label for="chemistryPositions">Chemistry-gated residues</label><input id="chemistryPositions" class="data" type="text" spellcheck="false"></div></div>
 <details><summary>PDB text</summary><textarea id="pdb" spellcheck="false" aria-label="PDB query contents"></textarea><button id="preview">Update preview</button></details>
 </div><div id="querySlot"><figure id="queryFigure"><div id="queryViewer" class="viewer" aria-label="Query structure preview"></div>
-<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" style="background:#1a73e8"></i>motif</span><span><i class="dot" style="background:#d55e00"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
+<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" data-chain-color="0" style="background:#f4adb3"></i>motif</span><span><i class="dot" data-color="chemistry" style="background:#9b6072"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
 <section class="group"><h2>Databases</h2>
 <div id="databases" class="list" role="group" aria-label="Target databases" hidden></div>
 <p class="hint" id="indexHint">For your database, mount Google Drive and enter its index path. Public Folddisco databases are not JMFS indexes.</p>
@@ -76,8 +78,8 @@ body.bench{height:100dvh;overflow:hidden}
 <section class="group"><h2>Parameters</h2><div class="grid">
 <div><label for="rmsd">RMSD cutoff (Å)</label><input id="rmsd" type="number" value="2.0" min="0.001" max="100" step="0.05"></div>
 <div><label for="limit">Hits kept</label><input id="limit" type="number" value="100" min="1" max="10000"></div>
-<div><label for="cpu">Compute</label><select id="cpu"><option value="auto">GPU or CPU</option><option value="cpu">CPU</option></select></div></div></section>
-<div class="group run"><button id="search" class="key">Search</button><p id="status" class="status" role="status" aria-live="polite"></p></div>
+<div><label for="cpu">Compute</label><select id="cpu"><option value="auto">GPU or CPU</option><option value="cpu">CPU</option></select></div></div><details id="computeAdvanced" hidden><summary>Advanced compute settings</summary><label for="cpuCores">CPU cores</label><input id="cpuCores" type="number" min="1" step="1" placeholder="Automatic"><p class="hint">Logical CPU cores used for CPU searches and local AI. Changes apply to the next search or model load.</p></details></section>
+<div class="group run"><button id="search" class="key">Search</button><progress id="searchProgress" max="1" hidden aria-label="Search progress"></progress><p id="searchEta" class="hint" hidden></p><div id="searchControls" class="job-controls" hidden><button id="searchPause">Pause</button><button id="searchStop">Stop</button></div><p id="status" class="status" role="status" aria-live="polite"></p></div>
 </section>
 <section id="results" class="group hits" aria-label="Hits" hidden><div class="bar"><span id="resultSummary"></span><button id="download">Download results</button></div>
 <div class="scroll"><table><thead><tr><th class="rank num">#</th><th>Target</th><th id="databaseHead" class="database" hidden>Database</th><th id="residuesHead" class="residues">Residues</th><th class="rmsd num">RMSD</th></tr></thead><tbody id="hits"></tbody></table></div>
@@ -89,9 +91,9 @@ body.bench{height:100dvh;overflow:hidden}
 <figure id="scenePanel" hidden><div id="resultViewer" class="viewer" aria-label="Query and target motif superposition"></div>
 <figcaption><div class="caption"><strong id="sceneStatus" class="data" role="status" aria-live="polite"></strong><a id="targetInfo" target="_blank" rel="noopener noreferrer" hidden>UniProt entry</a></div>
 <div id="about"></div><dl id="facts" class="caption"></dl>
-<div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" style="background:#0072b2"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
-<div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" style="background:#d55e00"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
-<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" style="background:#000"></i>matched query</span><span><i class="dot" style="background:#e69f00"></i>matched target</span></div>
+<div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" data-chain-color="0" style="background:#f4adb3"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
+<div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" data-chain-color="1" style="background:#94c5cc"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
+<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" data-color="queryMatch" style="background:#9b6072"></i>matched query</span><span><i class="dot" data-color="targetMatch" style="background:#278b9b"></i>matched target</span></div>
 <div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments), and RNA rebuilt from indexed C4′ atoms (Arena); DNA is not rebuilt. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
 <p class="hint credit">Workflow after the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS.</p>
 </div>
@@ -101,6 +103,7 @@ body.bench{height:100dvh;overflow:hidden}
 __JMFS_SCENE_JS__
 (() => {
 const cfg=JSON.parse(document.getElementById('config').textContent), $=id=>document.getElementById(id);
+try{const colors=JSON.parse(localStorage.getItem('jmfs-colors'));if(colors)globalThis.jmfsColors=colors;}catch{}
 const make=(tag,props,...children)=>{const node=Object.assign(document.createElement(tag),props);node.append(...children);return node;};
 const ready=cfg.ready||'Search the example database, or select your own target index.';
 // A host may list its own built-in queries, each with its structure as text or as a URL.
@@ -116,7 +119,12 @@ const status=(text,error=false)=>{$('status').textContent=text;$('status').class
 // One form, two hosts: a Colab kernel callback, or a page-supplied transport that answers the
 // same 'search' and 'scene' calls in this browser.
 const call=async(method,payload)=>{
-  if(cfg.transport) return window[cfg.transport](method,payload,text=>status(text));
+  if(cfg.transport) return window[cfg.transport](method,payload,(text,data={})=>{
+    status(text);if(method!=='search')return;
+    $('searchProgress').hidden=$('searchEta').hidden=false;
+    if(data.progress>0)$('searchProgress').value=data.progress;else $('searchProgress').removeAttribute('value');
+    $('searchEta').textContent=Number.isFinite(data.etaMs)?'ETA '+Math.ceil(data.etaMs/1000)+' s':'Estimating ETA…';
+  });
   if(!window.google?.colab?.kernel) throw Error('Run this interface in Google Colab with a connected runtime.');
   const response=await google.colab.kernel.invokeFunction(cfg.callback,[method,payload],{});
   const data=response.data['application/json']; return typeof data==='string'?JSON.parse(data):data;
@@ -125,28 +133,48 @@ function createViewer(id){
   if(!window.$3Dmol)throw Error('The molecular viewer did not load. Check your internet connection.');
   let viewer;try{viewer=$3Dmol.createViewer($(id),{backgroundColor:'white'});}catch{}
   if(!viewer)throw Error('This browser cannot draw 3D structures (WebGL is unavailable).');
+  const options=make('details',{className:'color-options',id:id+'Colors'},make('summary',{textContent:'Options',title:'Structure colors'}));
+  const fields=[['Chain 1','chain0'],['Chain 2','chain1'],['Chain 3','chain2'],['Chain 4','chain3'],['Query match','queryMatch'],['Target match','targetMatch'],['Chemistry','chemistry']];
+  const update=()=>{
+    document.querySelectorAll('.color-options input').forEach(input=>{const key=input.dataset.color;input.value=key.startsWith('chain')?jmfsChainColor(Number(key.slice(5))):jmfsColor(key);});
+    document.querySelectorAll('[data-chain-color]').forEach(dot=>dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor)));
+    document.querySelectorAll('i[data-color]').forEach(dot=>dot.style.background=jmfsColor(dot.dataset.color));
+    highlight();contextStyle();
+  };
+  for(const [label,key] of fields){
+    const input=make('input',{type:'color',value:key.startsWith('chain')?jmfsChainColor(Number(key.slice(5))):jmfsColor(key)});input.dataset.color=key;
+    input.oninput=()=>{globalThis.jmfsColors||={};if(key.startsWith('chain')){globalThis.jmfsColors.chains||=[0,1,2,3].map(jmfsChainColor);globalThis.jmfsColors.chains[Number(key.slice(5))]=input.value;}else globalThis.jmfsColors[key]=input.value;localStorage.setItem('jmfs-colors',JSON.stringify(globalThis.jmfsColors));update();};
+    options.append(make('label',{},document.createTextNode(label),input));
+  }
+  const reset=make('button',{textContent:'Reset colors'});reset.onclick=()=>{globalThis.jmfsColors={};localStorage.removeItem('jmfs-colors');update();};options.append(reset);$(id).append(options);
   return viewer;
 }
 function ranges(text){const list=[];for(const token of text.split(',')){const m=token.trim().match(/^(.+?)(-?\d+)(?:-(-?\d+))?$/);if(m)list.push({chain:m[1],start:Number(m[2]),end:Number(m[3]??m[2])});}return list;}
 const within=(list,atom)=>list.some(r=>atom.chain===r.chain&&atom.resi>=r.start&&atom.resi<=r.end);
 function chainControls(container,chains,enabled,onchange,prefix=''){
   container.replaceChildren();
-  for(const chain of chains){
+  for(const [index,chain] of chains.entries()){
     const label=document.createElement('label'),input=document.createElement('input');
     input.type='checkbox';input.checked=enabled.has(chain);input.dataset.chain=chain;
     input.onchange=()=>{if(input.checked)enabled.add(chain);else enabled.delete(chain);onchange();};
-    label.append(input,document.createTextNode(prefix+(chain.replace(/^(query|target)_/,'')||'(blank)')));container.append(label);
+    const dot=make('i',{className:'dot'});dot.dataset.chainColor=String(index+(chain.startsWith('target_')?1:0));dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor));
+    label.append(input,dot,document.createTextNode(prefix+(chain.replace(/^(query|target)_/,'')||'(blank)')));container.append(label);
   }
 }
-// The query figure: motif residues blue, those gated by chemistry vermillion, as in the notebook.
+// Each chain keeps its palette identity; chemistry gates use the darker pink.
 function highlight(){
   if(!queryViewer)return;
+  document.querySelectorAll('[data-chain-color]').forEach(dot=>dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor)));
+  document.querySelectorAll('i[data-color]').forEach(dot=>dot.style.background=jmfsColor(dot.dataset.color));
   const motif=ranges($('motif').value),gates=ranges($('chemistryPositions').value),gated=$('chemistry').value!=='none';
   const shown=a=>previewChains.has(a.chain),paint=color=>({cartoon:{color},stick:{radius:.15,color}});
   queryViewer.setStyle({},{});
-  queryViewer.setStyle({predicate:shown},{cartoon:{color:'#b8c1cc',opacity:.5}});
-  queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)},paint('#1a73e8'));
-  if(gated)queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))},paint('#d55e00'));
+  const chains=[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort();
+  chains.forEach((chain,index)=>{
+    queryViewer.setStyle({predicate:a=>shown(a)&&a.chain===chain},{cartoon:{color:jmfsChainColor(index),opacity:.85}});
+    queryViewer.setStyle({predicate:a=>shown(a)&&a.chain===chain&&within(motif,a)},paint(jmfsChainColor(index)));
+  });
+  if(gated)queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))},paint(jmfsColor('chemistry')));
   queryViewer.render();
 }
 function preview(){
@@ -322,19 +350,26 @@ function listHits(){
   }));
   if(named)annotate();
 }
-async function search(){
+async function search(override){
   if(busy)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
   try{
     const picked=databases.filter(db=>db.checked),other=$('index').value.trim();
-    if(databases.length&&!picked.length&&!other)throw Error('Choose a database to search.');
+    if(!override&&databases.length&&!picked.length&&!other)throw Error('Choose a database to search.');
     status('Searching…');
-    const data=await call('search',{pdb:$('pdb').value,motif:$('motif').value,rmsd:$('rmsd').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,limit:$('limit').value,cpu:$('cpu').value==='cpu',
+    const submittedQuery=queryState(),source=queries[Number($('source').value)]||{};
+    $('searchControls').hidden=!cfg.transport;
+    const data=await call('search',override||{pdb:$('pdb').value,source_name:source.label,source_reference_id:source.reference_id,source_pdb_id:source.pdb_id,motif:$('motif').value,rmsd:$('rmsd').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,limit:$('limit').value,cpu:$('cpu').value==='cpu',cpu_cores:Number($('cpuCores').value)||undefined,checkpoint:localStorage.getItem('jmfs-resume')==='on',
       // Several databases are one per line, as the notebook's path field accepts them.
       index:[...picked.filter(db=>!db.blob).map(db=>db.url),other].filter(Boolean).join('\n'),
       ...(cfg.indexFile?{index_files:picked.filter(db=>db.blob).map(db=>db.blob)}:{})});
     if(data.error)throw Error(data.error);
+    return displayResults(data,submittedQuery);
+  }catch(e){status(e.message,true);throw e;}
+  finally{busy=false;$('search').disabled=false;$('searchControls').hidden=true;$('searchProgress').hidden=$('searchEta').hidden=true;window.dispatchEvent(new Event('jmfs-job'));}
+}
+function displayResults(data,query=queryState()){
     rows=data.rows;download=data.download;scene=null;shown=null;
-    lastSearch={elapsed_ms:data.elapsed*1000,engine:data.engine,query:queryState()};
+    lastSearch={elapsed_ms:data.elapsed*1000,engine:data.engine,query};
     $('scenePanel').hidden=$('sceneTools').hidden=$('view').hidden=true;view(false);
     listHits();$('results').hidden=false;document.body.classList.add('has-hits');
     const targets=new Set(rows.map(row=>(row.source_index||'')+'\n'+row.target_id)).size;
@@ -342,8 +377,6 @@ async function search(){
     $('log').textContent=data.log;
     status('Search finished in '+data.elapsed.toFixed(3)+' s'+(data.engine?' on '+data.engine:'')+'.'+(rows.length?'':' No placements passed these settings.'));
     return {placements:rows.length,targets,elapsed_ms:data.elapsed*1000};
-  }catch(e){status(e.message,true);throw e;}
-  finally{busy=false;$('search').disabled=false;}
 }
 if(cfg.annotate)document.querySelector('.credit').append(' Gene, protein and organism names are looked up at ',make('a',{href:'https://www.uniprot.org',target:'_blank',rel:'noopener',textContent:'UniProt'}),'.');
 if(cfg.logo){$('logo').src=cfg.logo;$('logo').hidden=false;}
@@ -382,6 +415,12 @@ $('index').oninput=()=>{if($('index').value.trim())dropExample();};
 $('preview').onclick=preview;$('motif').oninput=$('chemistryPositions').oninput=highlight;
 $('chemistry').onchange=()=>{gate();highlight();};
 $('search').onclick=()=>search().catch(()=>{});
+if(cfg.transport){
+  $('computeAdvanced').hidden=false;$('cpuCores').max=String(navigator.hardwareConcurrency||2);
+  $('cpuCores').value=localStorage.getItem('jmfs-cpu-cores')||'';
+  $('cpuCores').onchange=()=>{if(!$('cpuCores').value||$('cpuCores').checkValidity())localStorage.setItem('jmfs-cpu-cores',$('cpuCores').value);};
+  $('searchPause').onclick=()=>window[cfg.transport].pause();$('searchStop').onclick=()=>window[cfg.transport].stop();
+}
 $('hits').onkeydown=e=>{
   const step=e.key==='ArrowDown'?1:e.key==='ArrowUp'?-1:0,row=e.target.closest('tr')?.[step>0?'nextElementSibling':'previousElementSibling'];
   if(step&&row){e.preventDefault();row.querySelector('button').focus();row.click();}
@@ -395,6 +434,11 @@ wide.addEventListener('change',arrange);arrange();
 // The optional local guide uses this same visible form and Search function.
 function queryState(){const source=queries[Number($('source').value)]||{};return {source_label:source.label,pdb_id:source.pdb_id,reference_id:source.reference_id,motif:$('motif').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,rmsd:Number($('rmsd').value),limit:Number($('limit').value),cpu:$('cpu').value,database_ids:databases.flatMap((db,i)=>db.checked?[String(i)]:[])};}
 window.jmfsGuideApi={
+  addIndex(file){
+    const listed=databases.find(db=>db.file===file.name);
+    if(listed)Object.assign(listed,{blob:file,checked:true});else databases.unshift({name:file.name,file:file.name,bytes:file.size,blob:file,checked:true});
+    for(const db of databases)if(db.example)db.checked=false;listDatabases();
+  },
   async loadStructure({id,text,chain='',reference_id,pdb_id,name}){
     if(busy)throw Error('Wait for the current search or structure to finish.');
     const label=(name?name+' · ':'')+id+(chain?' · chain '+chain:'');
@@ -429,6 +473,20 @@ window.jmfsGuideApi={
     gate();highlight();view(false);return queryState();
   },
   run:search,
+  async resumeJob(saved){
+    await this.restoreJobQuery(saved);
+    return search(await window[cfg.transport].resumePayload(saved));
+  },
+  async restoreJobQuery(saved){
+    const payload=await window[cfg.transport].resumePayload(saved);
+    await this.loadStructure({id:payload.source_pdb_id||'Saved query',text:payload.pdb,reference_id:payload.source_reference_id,pdb_id:payload.source_pdb_id,name:payload.source_name});
+    await this.setQuery({motif:payload.motif,chemistry:payload.chemistry,chemistry_positions:payload.chemistry_positions,rmsd:payload.rmsd,limit:payload.limit,cpu:payload.cpu?'cpu':'auto'});
+    $('cpuCores').value=String(payload.cpu_cores||'');
+    const urls=payload.index.split('\n');databases.forEach(db=>db.checked=urls.includes(db.url)||payload.index_files?.some(file=>file.name===db.blob?.name));$('index').value=urls.filter(url=>!databases.some(db=>db.url===url)).join(';');listDatabases();
+  },
+  async restoreJob(saved){
+    await this.restoreJobQuery(saved);await window[cfg.transport].restore(saved);return displayResults(saved.result);
+  },
 };
 loadQuery(Number($('source').value)).catch(()=>{});
 })();
