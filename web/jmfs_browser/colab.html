@@ -20,7 +20,7 @@
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=25";
+    import { createTransport } from "./colab_transport.js?v=30";
     import {fetchStructure} from './structure.js';
     import {savedIndexes,rememberIndex} from './range_cache.js?v=28';
 
@@ -73,13 +73,13 @@
     }
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=29"),
-        text("../../colab/scene.js?v=28"),
+        text("../../colab/app.html?v=30"),
+        text("../../colab/scene.js?v=30"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom?v=29");
       window.jmfsTransport = createTransport({
-        workerUrl: new URL("./search_worker.js?v=25", import.meta.url),
+        workerUrl: new URL("./search_worker.js?v=30", import.meta.url),
         wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=22", import.meta.url),
         demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
@@ -144,7 +144,7 @@
       const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=29');document.head.append(style);
       const {mountJobs}=await import('./jobs.js?v=29');
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
-      const {mountGuide}=await import('./ai/assistant.js?v=29');
+      const {mountGuide}=await import('./ai/assistant.js?v=30');
       const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
       window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {

@@ -11,9 +11,10 @@ export async function rangeCache(url){
       if(!response.ok)throw Error('Index HEAD failed');
       const etag=response.headers.get('etag'),size=Number(response.headers.get('content-length'));
       // Only versioned objects qualify; do not reuse unvalidated mutable bytes.
-      if(!etag||!Number.isSafeInteger(size)||size<=0)return null;
+      if(!etag||etag.startsWith('W/')||!Number.isSafeInteger(size)||size<=0)return null;
       metadata={etag,size};await cache.put(metadataKey,new Response(JSON.stringify(metadata)));
     }catch{if(!metadata)return null;}
+    if(metadata.etag.startsWith('W/'))return null;
     return {etag:metadata.etag,size:metadata.size,
       async read(offset,length){const response=await cache.match(key('range',url,metadata.etag,offset,length));return response?new Uint8Array(await response.arrayBuffer()):null;},
       async write(offset,bytes){await cache.put(key('range',url,metadata.etag,offset,bytes.length),new Response(bytes));},

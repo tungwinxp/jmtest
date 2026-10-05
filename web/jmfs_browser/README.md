@@ -65,13 +65,43 @@ action. Scientific acceptance remains in the shared Rust core. An example link o
 fills the composer. There is no enzyme-specific prompt route or residue preset in
 the guide.
 
-TheStageAI's Edge-LM GGUF builds are pinned in `ai/model.js`: Qwen3.5 0.8B
-(417,701,248 bytes) for CPU/WASM, and Gemma 4 E2B XS (1,733,114,080 bytes) on
-compatible Apple Metal or NVIDIA WebGPU adapters. Gemma is the default on those detected GPUs;
-settings can select the smaller model. MLX is not a browser runtime; both GPU paths
-use the compressed GGUF through Wllama/WebGPU. NVIDIA detection is tested with
-adapter descriptors; execution was measured on Apple Metal only. Qwen's tool use was less reliable in the
-workflow test. Wllama 3.8.1 runs both models locally and stores weights in OPFS.
+Gemma 4 E2B is the guide model. On Apple Silicon, start the optional native
+MLX companion from this checkout before enabling the guide:
+
+```sh
+sh web/jmfs_browser/ai/native/start.sh
+```
+
+It binds only `127.0.0.1:18773`, accepts the deployed site and local test origins,
+and downloads the pinned TheStageAI M-tier weights (about 1.44 GB) into
+`ai/native/.cache`. The pinned MLX/Edge-LM runtime and dependencies live in
+`ai/native/.venv`. Ctrl-C stops the companion. It offers fixed-model inference
+only; browser tools perform all validated actions. A process lock and request
+lock prevent duplicate native servers and simultaneous native inference.
+
+Without the companion, compatible Apple Metal or NVIDIA WebGPU adapters use
+the pinned Gemma XS GGUF (1,733,114,080 bytes) through Wllama 3.8.1. NVIDIA
+selection is tested with adapter descriptors; execution was measured on Apple
+Metal only. Unsupported browsers require the companion rather than silently
+starting a CPU AI. Qwen is removed; the next visit deletes only its identified
+browser model cache and download job. Database files are preserved.
+
+Temperature and seed are zero, thinking is disabled, and prompt KV caching is
+enabled. Each command uses only current workbench state, with no prior chat
+turns, a 4,096-token context budget, at most 128 generated tokens per round,
+and at most three inference rounds, each with a 15-second inference deadline.
+Tool menus are stable within each turn. The generic `search_motif`
+tool verifies a reference, updates the form and runs the requested search in
+one action; no enzyme-specific prompt route is used. Simple completed actions
+need no second inference merely for confirmation.
+
+AI loading starts only on explicit enable/send, never by opening the guide.
+The guide unloads after 60 idle seconds, on hiding or closing the page, or via
+**Release AI from memory**. The companion also unloads after 60 idle seconds
+if a crashed tab fails to release it. Weights remain on disk for reuse;
+browser eviction controls do not delete native files. A Web Lock permits only
+one JMFS compute tab per origin and browser profile. It does not control other
+applications or profiles.
 The service worker adds isolation headers needed for multithreaded WASM on Pages.
 Build the pinned runtime assets with `npm ci --ignore-scripts && npm run build:ai`.
 Run the input, range and tool-guard checks with `npm run test:ai`.

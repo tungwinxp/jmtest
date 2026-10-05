@@ -1,4 +1,4 @@
-import {rangeCache} from './range_cache.js';
+import {rangeCache} from './range_cache.js?v=30';
 const HEADER_LENGTH = 64;
 const SECTION_LENGTH = 32;
 const DIR_LENGTH = 56;

@@ -7,7 +7,7 @@ colors:
   on-primary: "#FFFFFF"
   primary-hover: "#202124"
   primary-wash: "#F1F3F4"
-  blossom: "#F29BB0"
+  blossom: "#F4ADB3"
   coral: "#F07F67"
   sage: "#A7B978"
   light-green: "#B7D69E"
@@ -18,12 +18,12 @@ colors:
   hairline: "#DADCE0"
   outline: "#9AA0A6"
   error: "#B3261E"
-  mol-geometry: "#F29BB0"
+  mol-geometry: "#F4ADB3"
   mol-chemistry: "#C83D6F"
   mol-context: "#B8C1CC"
-  mol-query: "#F29BB0"
-  mol-target: "#B7D69E"
-  mol-match: "#4F7E4A"
+  mol-query: "#93C7CC"
+  mol-target: "#E2E5E9"
+  mol-match: "#B8BDC5"
 typography:
   title:
     fontFamily: system-ui
@@ -173,8 +173,9 @@ beside them.
 
 The interface is minimal: white surfaces, gray hairlines, charcoal controls.
 Light pink belongs to query structures; dark pink marks chemistry-gated residues.
-Light green complements pink and the green JUMP logo in multichain structures;
-further chains use coral and sage. Colors use brighter variants of the user's
+Light green complements pink and the green JUMP logo in multichain query structures;
+further query chains use coral and sage. Target chains remain neutral gray.
+Colors use brighter variants of the user's
 Ponyo and Ghibli references, with 85% opacity for context chains.
 Chain legends repeat the molecule
 colors, so identification does not depend on color alone. A small Options
@@ -198,10 +199,16 @@ white labels. Molecule colors are independently adjustable.
 Molecule colours. In the query figure, **geometry** residues are
 `{colors.mol-geometry}` and **chemistry-gated** residues `{colors.mol-chemistry}`
 over a faint `{colors.mol-context}` chain, as in the notebook. In the hit
-figure `colab/scene.js` uses the complementary set: query
+figure `colab/scene.js` uses separate roles: query
 `{colors.mol-query}`, target `{colors.mol-target}`, matched target residues
-`{colors.mol-match}` and matched query residues dark pink. Additional chains
-cycle through light green, coral and sage. Text chain labels accompany every dot.
+`{colors.mol-match}` and the query motif light pink, independently of its chain.
+Dark pink is reserved for chemistry gates. Additional query chains cycle through
+the reference palette’s light blue, blue-gray, cream and peach; target chains stay whitish gray. Text chain labels accompany every dot.
+The post-search view hides whole-query context by default, while retaining its
+motif, with segments colored baby pink, coral, cream and lavender in order. Segment range labels identify every block. Atom sticks appear only at chemistry-gated residues and their
+matched target positions, using atoms present in the scene. Protein sticks include
+the Cα attachment and side chain, omitting N/C/O backbone stubs; hover labels name
+the atom. The query preview uses the same chemistry-only stick scope.
 
 ## Typography
 

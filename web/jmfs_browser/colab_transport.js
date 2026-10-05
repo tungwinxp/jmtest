@@ -4,6 +4,7 @@
 // adapter or, without one, on WASM CPU workers. Nothing is uploaded.
 import {loadCheckpoint,saveCheckpoint,deleteCheckpoint} from './checkpoint.js?v=25';
 import {savedIndexes} from './range_cache.js';
+import {claimCompute} from './compute.js?v=30';
 export const JOB_KEY='workbench-job';
 
 // Databases kept resident on the device at once; each has its own worker and device budget.
@@ -321,8 +322,8 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
 
   const transport = async (method, payload, progress = () => {}) => {
     try {
-      if (method === "search") return await search(payload, progress);
-      if (method === "scene") return await scene(payload);
+      if (method === "search") {await claimCompute();return await search(payload, progress);}
+      if (method === "scene") {await claimCompute();return await scene(payload);}
       throw new Error("Unknown action");
     } catch (error) {
       if(method==='search'&&job&&!stopped){job.status=paused?'paused':'error';job.error=error?.message;await saveJob();}

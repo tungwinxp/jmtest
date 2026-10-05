@@ -67,9 +67,10 @@ body.bench{height:100dvh;overflow:hidden}
 <div class="field"><label for="motif">Motif residues</label><input id="motif" class="data" type="text" spellcheck="false" placeholder="A10-12,A45-47,A80-82" title="Chain IDs and PDB residue numbers. Commas separate blocks; a range includes every residue between its ends."></div>
 <div class="field chem"><div><label for="chemistry">Chemistry</label><select id="chemistry"><option value="reduced">Reduced</option><option value="exact">Exact</option><option value="none">None</option></select></div>
 <div><label for="chemistryPositions">Chemistry-gated residues</label><input id="chemistryPositions" class="data" type="text" spellcheck="false"></div></div>
+<details id="chemistryHelp"><summary>What is reduced chemistry?</summary><p class="hint">Reduced allows substitutions within JMFS’s predefined residue groups at the chemistry-gated positions. Protein groups are A/S/T, R/K, N/D, Q/E, C/U, I/V, L/M and F/Y; G, H, P and W stay separate. For example, serine can match alanine or threonine, and aspartate can match asparagine. Modified residues follow the engine’s normalization.</p><p class="hint">Exact requires the same normalized residue identity. None disables chemistry filtering. A blank chemistry-gated field checks every motif residue. Segment continuity, geometry and the RMSD cutoff still apply. Reduced groups do not establish equivalent catalytic activity.</p><p class="hint">For nucleic acids, reduced groups are A/G/I and C/U/T. Protein residues and nucleotide bases never substitute for each other.</p></details>
 <details><summary>PDB text</summary><textarea id="pdb" spellcheck="false" aria-label="PDB query contents"></textarea><button id="preview">Update preview</button></details>
 </div><div id="querySlot"><figure id="queryFigure"><div id="queryViewer" class="viewer" aria-label="Query structure preview"></div>
-<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" data-color="queryMatch" style="background:#f4adb3"></i>Query motif</span><span><i class="dot" data-color="chemistry" style="background:#c83d6f"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
+<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" data-color="queryMatch" style="background:#f4adb3"></i>Query motif</span><span><i class="dot" data-color="chemistry" style="background:#c83d6f"></i>chemistry-gated</span><span id="querySegments" class="toggles" aria-label="Motif segment colors"></span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
 <section class="group"><h2>Databases</h2>
 <div id="databases" class="list" role="group" aria-label="Target databases" hidden></div>
 <p class="hint" id="indexHint">For your database, mount Google Drive and enter its index path. Public Folddisco databases are not JMFS indexes.</p>
@@ -93,7 +94,7 @@ body.bench{height:100dvh;overflow:hidden}
 <div id="about"></div><dl id="facts" class="caption"></dl>
 <div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox"><i class="dot" data-chain-color="0" style="background:#93c7cc"></i>Query context</label><div id="resultQueryChains" class="toggles"></div></div>
 <div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" data-color="target" style="background:#e2e5e9"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
-<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label><label><input id="sideChains" type="checkbox" checked>Chemistry atoms</label></div><span><i class="dot" data-color="queryMatch" style="background:#f4adb3"></i>Query motif</span><span><i class="dot" data-color="targetMatch" style="background:#b8bdc5"></i>Target match</span></div>
+<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label><label><input id="sideChains" type="checkbox" checked>Chemistry atoms</label></div><span>Query segments</span><span id="resultSegments" class="toggles" aria-label="Matched query segment colors"></span><span><i class="dot" data-color="chemistry" style="background:#c83d6f"></i>Chemistry</span><span><i class="dot" data-color="targetMatch" style="background:#b8bdc5"></i>Target match</span></div>
 <div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments), and RNA rebuilt from indexed C4′ atoms (Arena); DNA is not rebuilt. Chemistry sticks show available atoms only; backbone-only targets have no side chains to compare. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
 <p class="hint credit">Workflow after the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS.</p>
 </div>
@@ -166,6 +167,9 @@ function createViewer(id){
 }
 function ranges(text){const list=[];for(const token of text.split(',')){const m=token.trim().match(/^(.+?)(-?\d+)(?:-(-?\d+))?$/);if(m)list.push({chain:m[1],start:Number(m[2]),end:Number(m[3]??m[2])});}return list;}
 const within=(list,atom)=>list.some(r=>atom.chain===r.chain&&atom.resi>=r.start&&atom.resi<=r.end);
+function segmentLegend(container,text){
+  container.replaceChildren(...ranges(text).map((r,i)=>{const dot=make('i',{className:'dot'});dot.style.background=jmfsSegmentColor(i);return make('span',{},dot,document.createTextNode(r.chain+r.start+(r.end===r.start?'':'–'+r.end)));}));
+}
 function chainControls(container,chains,enabled,onchange,prefix=''){
   container.replaceChildren();
   for(const [index,chain] of chains.entries()){
@@ -184,14 +188,16 @@ function highlight(){
   document.querySelectorAll('[data-chain-color]').forEach(dot=>dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor)));
   document.querySelectorAll('i[data-color]').forEach(dot=>dot.style.background=jmfsColor(dot.dataset.color));
   const motif=ranges($('motif').value),gates=ranges($('chemistryPositions').value),gated=$('chemistry').value!=='none';
-  const shown=a=>previewChains.has(a.chain),paint=color=>({cartoon:{color},...(previewAtoms?{stick:{radius:.15,color}}:{})});
+  const shown=a=>previewChains.has(a.chain),paint=color=>({cartoon:{color}});
   queryViewer.setStyle({},{});
   const chains=[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort();
   chains.forEach((chain,index)=>{
     if(!previewMotifOnly)queryViewer.setStyle({predicate:a=>shown(a)&&a.chain===chain},{cartoon:{color:jmfsChainColor(index),opacity:.85}});
   });
-  queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)},paint(jmfsColor('queryMatch')));
+  for(const [segment,r] of motif.entries())queryViewer.setStyle({predicate:a=>shown(a)&&within([r],a)},paint(jmfsSegmentColor(segment)));
+  segmentLegend($('querySegments'),$('motif').value);
   if(gated)queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))},paint(jmfsColor('chemistry')));
+  if(gated&&previewAtoms)queryViewer.addStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))&&jmfsChemistryAtom(a)},{stick:{radius:.15,color:jmfsColor('chemistry')}});
   queryViewer.render();
 }
 function preview(){
@@ -295,7 +301,8 @@ function arrange(){
 }
 function prepareScene(secondary){
   const query=lastSearch?.query||queryState();
-  installJMFSScene(resultViewer,secondary,{},query.chemistry==='none'?[]:ranges(query.chemistry_positions||query.motif));
+  installJMFSScene(resultViewer,secondary,{},query.chemistry==='none'?[]:ranges(query.chemistry_positions||query.motif),String(rows[shown]?.seg_len||'').split(/[,;]/).map(Number));
+  segmentLegend($('resultSegments'),query.motif);
   sceneChains=new Set(resultViewer.getModel().selectedAtoms({}).filter(a=>!isMatch(a)).map(a=>a.chain));
   for(const role of ['query','target'])chainControls($('result'+(role==='query'?'Query':'Target')+'Chains'),[...sceneChains].filter(c=>c.startsWith(role+'_')).sort(),sceneChains,contextStyle,'Chain ');
 }
@@ -370,7 +377,8 @@ function listHits(){
   }));
   if(named)annotate();
 }
-async function search(override){
+async function search(override,fromGuide=false){
+  if(window.jmfsGuideBusy&&!fromGuide)throw Error('Wait for the local guide, or stop it before starting a manual search.');
   if(busy)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
   let result;
   try{
@@ -470,7 +478,7 @@ window.jmfsGuideApi={
     $('source').append(new Option(label,i));$('source').value=String(i);await loadQuery(i);
     status('Loaded '+label+'. Select motif residues in the structure or type their ranges.');return queryState();
   },
-  state:()=>({query:queryState(),busy,databases:databases.map((db,i)=>({id:String(i),name:db.name,available:Boolean(db.url||db.blob),example:Boolean(db.example)})),
+  state:()=>({query:queryState(),chemistry_help:$('chemistryHelp').textContent,busy,databases:databases.map((db,i)=>({id:String(i),name:db.name,available:Boolean(db.url||db.blob),example:Boolean(db.example)})),
     results:lastSearch?{...lastSearch,retained_placements:rows.length,targets_with_retained_hits:new Set(rows.map(r=>(r.source_index||'')+'\n'+r.target_id)).size,possibly_capped:rows.length>=lastSearch.query.limit,
       top_hits:rows.slice(0,10).map(r=>({...r,uniprot_accession:uniprot(r.target_id),annotation:describe(r)})),selected_hit:rows[shown]?{...rows[shown],uniprot_accession:uniprot(rows[shown].target_id),annotation:describe(rows[shown])}:null}:null,
     viewer:{hit_rank:shown===null?null:shown+1,chains:(resultViewer&&!$('scenePanel').hidden?resultViewer:queryViewer)?.getModel().selectedAtoms({}).filter(a=>!isMatch(a)).map(a=>a.chain).filter((c,i,list)=>list.indexOf(c)===i)||[],visible_chains:resultViewer?[...sceneChains]:[...previewChains],query:$('showQuery').checked,target:$('showTarget').checked,motif_only:resultViewer&&!$('scenePanel').hidden?$('motifOnly').checked:previewMotifOnly,sidechains:resultViewer&&!$('scenePanel').hidden?$('sideChains').checked:previewAtoms}}),
@@ -548,7 +556,7 @@ window.jmfsGuideApi={
     if(draft.database_ids){databases.forEach((db,i)=>db.checked=draft.database_ids.includes(String(i)));$('index').value='';listDatabases();}
     gate();highlight();view(false);return queryState();
   },
-  run:search,
+  run:()=>search(undefined,true),
   async resumeJob(saved){
     await this.restoreJobQuery(saved);
     return search(await window[cfg.transport].resumePayload(saved));

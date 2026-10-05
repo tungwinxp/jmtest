@@ -13,6 +13,8 @@ export function parseHints(text){
     setup:/\b(?:use|load|set|setup|change|search|searched|run)\b/.test(lower),
     chain:text.match(/\bchain\s+([A-Za-z0-9_]+)\b/i)?.[1],
     external:/\b(?:rcsb|prosite|sequence search|structural motif search|look up|lookup|in (?:the )?pdb)\b/.test(lower)||(/\b(?:what|describe|tell)\b/.test(lower)&&ids.length>0),
+    view:/\b(?:show|hide|view|display|rotate|turn|zoom|pan|center|centre|focus|colou?r|sidechains?|overlap|download|export)\b/.test(lower),
+    annotations:/\b(?:sugars?|ligands?|bind(?:ing)?|bound|function|activity|annotations?|evidence)\b/.test(lower),
     unsupported:/\b(?:fdp|folddisco|prefilter|insertion)\b/.test(lower)};
 }
 export function draftFromHints(hints,state){
@@ -43,6 +45,7 @@ export function makeTools(z){
     run_jmfs_query:z.object({}).strict(),
     protein_view:z.object({action:z.enum(['motif','whole','query','target','focus','visibility','select_hit','color','reset_colors','rotate','zoom','pan','download']),hit_rank:z.number().int().min(1).max(10000).optional(),query:z.boolean().optional(),target:z.boolean().optional(),motif_only:z.boolean().optional(),sidechains:z.boolean().optional(),chains:z.array(small).max(100).optional(),part:z.enum(['chain0','chain1','chain2','chain3','queryMatch','target','targetMatch','chemistry']).optional(),color:z.string().regex(/^#[\da-f]{6}$/i).optional(),angle:z.number().min(-360).max(360).optional(),axis:z.enum(['x','y','z']).optional(),factor:z.number().min(.1).max(10).optional(),dx:z.number().min(-1000).max(1000).optional(),dy:z.number().min(-1000).max(1000).optional()}).strict(),
     annotate_hits:z.object({limit:z.number().int().min(1).max(10).default(5)}).strict(),
+    search_motif:z.object({name:small,organism:small,database_ids:z.array(z.string().regex(/^\d+$/)).min(1).max(4),chemistry:z.enum(['none','exact','reduced']).optional(),rmsd:z.number().min(.001).max(100).optional(),limit:z.number().int().min(1).max(10000).optional()}).strict(),
   };
   const descriptions={
     motif_lookup:'Find verified catalytic residues. Supply enzyme name WITHOUT species plus organism, or a pdb_id for M-CSA annotations. Returns reference_id and verified selections; no memorized enzyme presets.',
@@ -52,8 +55,9 @@ export function makeTools(z){
     pdb_structural_motif_search:'Search PDB with verified mmCIF label residue IDs.',
     set_jmfs_query:'Set the visible form. For a verified motif supply reference_id and database_ids ONLY; the tool fills verified residue selections. Otherwise use explicit settings. Use REQUESTED_FIELDS for user-specified settings.',
     run_jmfs_query:'Run the visible JMFS query once when the user explicitly asks to search.',
-    protein_view:'Operate the current protein viewer: motif only, whole structure, query or target, focus motif, chain/query/target visibility, sidechains (show/hide existing chemistry-gated atoms as sticks), select a 1-based hit rank, colors (hex), reset colors, rotate (degrees), zoom (factor >1 zooms in), pan (pixels), or download the selected structure. Use VIEWER_CONTEXT chain IDs. Display changes never change the searched motif; never invent missing target side chains.',
+    protein_view:'Change the current protein display using VIEWER_CONTEXT chain IDs. Hit ranks are 1-based; colors are hex; rotation is degrees, zoom factor >1 zooms in, pan is pixels. Sidechains displays existing chemistry-gated atoms only. Never changes search settings.',
     annotate_hits:'Download UniProt function and ligand-binding evidence for the top retained hits (default 5, max 10 distinct proteins). Use for questions about sugars or other ligands. No structural match proves binding; missing annotations are unknown. Returns source links and evidence codes. Sends public accession IDs only.',
+    search_motif:'Find and search a verified catalytic motif in one action. Supply enzyme name WITHOUT species, reference organism and target database_ids. Fetches source annotations and geometry, preserves verified ranges, sets the visible query, then runs once. Uses a unique matching reference name; ambiguous choices return candidates for motif_lookup/set_jmfs_query instead. No enzyme presets or guessed residues.',
   };
   // Runtime validation retains all bounds. Keep the model grammar small.
   const parameters=schema=>JSON.parse(JSON.stringify(z.toJSONSchema(schema,{target:'draft-7'}),(key,value)=>['$schema','pattern','minLength','maxLength','minimum','maximum','default'].includes(key)?undefined:value));

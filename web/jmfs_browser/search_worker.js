@@ -1,6 +1,6 @@
 // Keep the worker's static module graph coherent across cached deployments.
 // Increment this query token whenever the browser core ABI or orchestration changes.
-import { BlobRangeSource, HttpRangeSource, JmfsIndex } from "./jmfs_index.js?v=24";
+import { BlobRangeSource, HttpRangeSource, JmfsIndex } from "./jmfs_index.js?v=30";
 import { parsePdb, prepareQuery } from "./query.js?v=24";
 import { WasmCore } from "./wasm_core.js?v=22";
 import { WebGpuLocalFilter } from "./webgpu.js?v=22";

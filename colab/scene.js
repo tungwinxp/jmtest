@@ -2,6 +2,8 @@
 // Brighter variants of the user's Ghibli palette, reserved for structures.
 function jmfsChainColor(index){return globalThis.jmfsColors?.chains?.[index%4]||['#93c7cc','#b1bcc4','#eddaa0','#efc3b6'][index%4];}
 function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#f4adb3',chemistry:'#c83d6f',target:'#e2e5e9',targetMatch:'#b8bdc5'}[name];}
+function jmfsSegmentColor(index){return [jmfsColor('queryMatch'),'#e99b87','#ebd694','#baa8ca'][index%4];}
+function jmfsChemistryAtom(a){return !/^(?:N|C|O|OXT|H|HN|HA|HA2|HA3)$/.test(a.atom);}
 // Viewer selections keep contiguous anchors together instead of creating singleton segments.
 function jmfsMotifRanges(anchors){
   const runs=[],seen=new Set();
@@ -13,7 +15,7 @@ function jmfsMotifRanges(anchors){
   }
   return runs.map(r=>r.chain+r.start+(r.end===r.start?'':'-'+r.end)).join(',');
 }
-function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
+function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[], segmentLengths=[]) {
   const atoms=viewer.getModel().selectedAtoms({});
   const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
   for(const a of atoms){a.ss='c';a.ssbegin=false;a.ssend=false;}
@@ -26,7 +28,10 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
   let enabled=new Set(atoms.filter(a=>!isMatch(a)).map(a=>a.chain));
   let showQuery=false,showTarget=true,motifOnly=false;
   let sideChains=true;
-  const chemistryResidues=new Set(),chemistryMatches=new Set();
+  const chemistryResidues=new Set(),proteinResidues=new Set(),chemistryMatches=new Set();
+  const residueKey=a=>a.chain+'\0'+a.resi+'\0'+(a.icode||'');
+  for(const a of atoms)if(a.atom==='CA')proteinResidues.add(residueKey(a));
+  const chemistryAtom=a=>!proteinResidues.has(residueKey(a))||jmfsChemistryAtom(a);
   for(const role of ['query','target']){
     const context=atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)&&(a.atom==='CA'||a.atom==="C4'"));
     for(const a of atoms.filter(a=>a.chain===role+'_match')){
@@ -36,6 +41,18 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
     }
   }
   const queryMatches=atoms.filter(a=>a.chain==='query_match'),targetMatches=atoms.filter(a=>a.chain==='target_match');
+  let offset=0;
+  for(const [segment,length] of segmentLengths.entries()){for(const a of queryMatches.slice(offset,offset+length))a.jmfsSegment=segment;offset+=length;}
+  // Use the actual source backbone for smooth cartoons; keep a trace fallback
+  // only when an anchor has no corresponding backbone atoms.
+  const smoothMatches=new Set(),smoothResidues=new Map();
+  for(const a of [...queryMatches,...targetMatches]){
+    const origin=a.jmfsOrigin;if(!origin)continue;
+    const key=residueKey(origin);
+    if(origin.atom==='CA'&&atoms.some(b=>residueKey(b)===key&&b.atom==='O')){
+      smoothMatches.add(a);smoothResidues.set(key,a);
+    }
+  }
   for(const [index,a] of queryMatches.entries()){
     const origin=a.jmfsOrigin;
     if(!origin||!chemistry.some(r=>origin.chain==='query_'+r.chain&&origin.resi>=r.start&&origin.resi<=r.end))continue;
@@ -44,6 +61,7 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
   }
   function visible(a){
     if(isMatch(a))return !a.contextChains.length||a.contextChains.some(c=>enabled.has(c));
+    if(smoothResidues.has(residueKey(a)))return enabled.has(a.chain);
     if(!(a.chain.startsWith('query_')?showQuery:showTarget))return false;
     return !motifOnly&&enabled.has(a.chain);
   }
@@ -82,7 +100,7 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
         'font:12px/1.4 system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none';
       container.appendChild(tip);
     }
-    tip.textContent=role+' · '+a.resn+' ('+one(a)+') · '+location+'\n'+nearby;
+    tip.textContent=role+' · '+a.resn+' ('+one(a)+') · '+location+' · atom '+atom.atom+'\n'+nearby;
     tip.hidden=false;
     // Beside the pointer, moved back inside the viewer where it would cross an edge.
     const box=container.getBoundingClientRect();
@@ -99,9 +117,15 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
       const chains=[...new Set(atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)).map(a=>a.chain))].sort();
       chains.forEach((chain,index)=>viewer.setStyle({predicate:a=>visible(a)&&a.chain===chain}, {cartoon:{arrows:true,color:role==='target'?jmfsColor('target'):jmfsChainColor(index),opacity:.85}}));
       const motifColor=jmfsColor(role+'Match');
-      viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.35:.18},sphere:{color:motifColor,radius:role==='query'?.36:.23}});
+      viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'&&!smoothMatches.has(a)}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.35:.18},sphere:{color:motifColor,radius:role==='query'?.36:.23}});
+      viewer.setStyle({predicate:a=>visible(a)&&a.chain.startsWith(role+'_')&&!isMatch(a)&&smoothResidues.has(residueKey(a))},{cartoon:{style:'oval',ribbon:true,gapcutoff:0,color:motifColor,thickness:role==='query'?.3:.18}});
+      if(role==='query')for(const segment of new Set(queryMatches.map(a=>a.jmfsSegment).filter(s=>s!==undefined))){
+        const color=jmfsSegmentColor(segment);
+        viewer.setStyle({predicate:a=>visible(a)&&a.chain==='query_match'&&a.jmfsSegment===segment&&!smoothMatches.has(a)},{cartoon:{style:'trace',color,thickness:.35},sphere:{color,radius:.36}});
+        viewer.setStyle({predicate:a=>visible(a)&&a.chain.startsWith('query_')&&!isMatch(a)&&smoothResidues.get(residueKey(a))?.jmfsSegment===segment},{cartoon:{style:'oval',ribbon:true,gapcutoff:0,color,thickness:.3}});
+      }
       if(role==='query')viewer.addStyle({predicate:a=>visible(a)&&chemistryMatches.has(a)},{sphere:{radius:.36,color:jmfsColor('chemistry')}});
-      if(sideChains)viewer.addStyle({predicate:a=>enabled.has(a.chain)&&a.chain.startsWith(role+'_')&&!isMatch(a)&&chemistryResidues.has(a.chain+'\0'+a.resi+'\0'+(a.icode||''))},{stick:{radius:.16,color:role==='query'?jmfsColor('chemistry'):motifColor}});
+      if(sideChains)viewer.addStyle({predicate:a=>enabled.has(a.chain)&&a.chain.startsWith(role+'_')&&!isMatch(a)&&chemistryResidues.has(residueKey(a))&&chemistryAtom(a)},{stick:{radius:.16,color:role==='query'?jmfsColor('chemistry'):motifColor}});
     }
     viewer.render();
   };
