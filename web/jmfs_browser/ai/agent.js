@@ -82,6 +82,9 @@ export function createAgent(api,config={}){
         // It may also write the request as the action ("zoom in"); accept the action word it leads with.
         const actions=schema.shape.action.options,words=String(args.action).toLowerCase().split(/[^a-z]+/).filter(Boolean),action=actions.includes(args.action)?args.action:actions.find(a=>a===words.slice(0,2).join('_'))||actions.find(a=>a===words[0]);
         if(action&&action!==args.action){args={...args,action};if(action==='zoom'){const out=words.includes('out');if(!(args.factor>0)||(out?args.factor>=1:args.factor<=1))args.factor=out?0.5:2;}}
+        // "Hide the target" names what to hide; the query and target actions name what stays.
+        const hidden=text.match(/\bhide\s+(?:the\s+)?(query|target)\b/i)?.[1].toLowerCase();
+        if(hidden&&args.action===hidden)args={...args,action:hidden==='target'?'query':'target'};
         const takes={select_hit:['hit_rank'],rotate:['angle','axis'],zoom:['factor'],pan:['dx','dy'],color:['part','color'],visibility:['query','target','motif_only','sidechains','chains']}[args.action]||[];
         args=Object.fromEntries(Object.entries(args).filter(([key])=>key==='action'||takes.includes(key)||(key==='hit_rank'&&/\b(?:hit|rank)\b/i.test(text))||(key==='sidechains'&&/side.?chains?|chemistry/i.test(text))));
       }
@@ -183,7 +186,7 @@ export function createAgent(api,config={}){
       if(signal?.aborted)throw new DOMException('Stopped','AbortError');
       onStatus('Thinking on this computer…');
       const inferenceSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000);
-      const result=await llm.createChatCompletion({messages,tools:definitions.length?definitions:undefined,tool_choice:definitions.length?'auto':undefined,temperature:0,seed:0,max_tokens:128,cache_prompt:true,chat_template_kwargs:{enable_thinking:false},abortSignal:inferenceSignal});
+      const result=await llm.createChatCompletion({messages,tools:definitions.length?definitions:undefined,tool_choice:definitions.length?'auto':undefined,temperature:0,seed:0,max_tokens:viewOnly?192:128,cache_prompt:true,chat_template_kwargs:{enable_thinking:false},abortSignal:inferenceSignal});
       const message=result.choices[0].message;messages.push(message);
       if(!message.tool_calls?.length){const last=messages.findLast(m=>m.role==='tool'),error=last&&JSON.parse(last.content).error;let reply=error?'I could not complete that action: '+error:message.content?.trim()||(last?'The requested action is complete.':'Tell me which reference structure or result you would like help with.');if(hints.run&&!runUsed)reply='No search was run. '+reply;return finish(reply);}
       const completed=[];

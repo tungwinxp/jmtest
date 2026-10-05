@@ -170,7 +170,8 @@ test('Small-model view calls keep what the chosen action takes; annotation answe
   await createAgent(api).turn('Zoom in.',view({action:'zoom_in',factor:1,query:false,sidechains:false}));
   await createAgent(api).turn('Show hit 1.',view({action:'select_hit',hit_rank:1,target:false,color:'red',dx:.5}));
   await createAgent(api).turn('Show only the motif without side chains.',view({action:'motif',sidechains:false,hit_rank:1}));
-  assert.deepEqual(commands,[{action:'zoom',factor:2},{action:'select_hit',hit_rank:1},{action:'motif',sidechains:false}]);
+  await createAgent(api).turn('Hide the target.',view({action:'target',target:false,sidechains:true}));
+  assert.deepEqual(commands,[{action:'zoom',factor:2},{action:'select_hit',hit_rank:1},{action:'motif',sidechains:false},{action:'query'}]);
   const original=globalThis.fetch,site=position=>({type:'Binding site',location:{start:{value:position},end:{value:position}},ligand:{name:'Ca(2+)'},evidences:[{evidenceCode:'ECO:0000250',source:'UniProtKB',id:'P00760'}]});
   try{
     globalThis.fetch=async()=>Response.json({entryType:'UniProtKB reviewed (Swiss-Prot)',proteinDescription:{recommendedName:{fullName:{value:'Serine protease 1'}}},comments:[{commentType:'COFACTOR',cofactors:[{name:'Ca(2+)'}]}],features:[site(75),site(77)],keywords:[{name:'Calcium'}]});

@@ -22,6 +22,8 @@ MODEL_ID = 'mlx-community/MiniCPM5-1B-4bit'
 REVISION = '36447e84d28c57588a6e91907675e44afe54ab00'
 # One chunk covers a whole guide prompt; cancellation is checked between generated tokens.
 PREFILL = 2048
+# A view call padded with unused settings needs more than the usual 128 tokens to close.
+LIMIT = 192
 SWITCH = {'true': True, 'yes': True, 'on': True, 'show': True, 'visible': True,
           'false': False, 'no': False, 'off': False, 'hide': False, 'hidden': False}
 ORIGINS = {'https://tungwinxp.github.io', 'http://127.0.0.1:8771', 'http://localhost:8771'}
@@ -127,7 +129,7 @@ def completion(body):
     prompt = tokenizer.apply_chat_template(messages, tools=tools, tokenize=False,
                                           add_generation_prompt=True, enable_thinking=False)
     ids = tokenizer.encode(prompt, add_special_tokens=False)
-    if len(ids) + 128 > 4096:
+    if len(ids) + LIMIT > 4096:
         raise ValueError('This command exceeds the 4096-token guide budget. Split it into smaller commands.')
     # Reuse the longest prefix shared with the previous command and drop the rest of its cache.
     reused = 0
@@ -145,7 +147,7 @@ def completion(body):
     started = time.perf_counter()
     try:
         for result in stream_generate(model, tokenizer, prompt=new_ids, prompt_cache=cache,
-                sampler=make_sampler(temp=0), max_tokens=max(1, min(128, int(body.get('max_tokens', 128)))),
+                sampler=make_sampler(temp=0), max_tokens=max(1, min(LIMIT, int(body.get('max_tokens', 128)))),
                 prefill_step_size=PREFILL):
             if cancel.is_set(): raise InterruptedError('Generation stopped.')
             parts.append(result.text); tokens.append(result.token); last = result

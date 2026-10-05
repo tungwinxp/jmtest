@@ -306,3 +306,6 @@ dots. Nothing else is rounded.
   per figure.
 - **Don't** use complementary molecule colors as decorative page accents.
 - **Don't** animate anything beyond a 120ms hover wash.
+- **Exception.** The landing screen (`#intro` in `colab.html`) is deliberately outside the
+  last three rules: it has a headline, a vector dot lattice with two motif traces, and a
+  one-time entrance animation, all scoped to `#intro` and gone once the workbench opens.
