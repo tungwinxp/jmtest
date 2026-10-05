@@ -25,7 +25,8 @@ Tools:
 An assistant without MCP can build the link itself. Add query parameters to
 `https://tungwinxp.github.io/jmtest/web/jmfs_browser/colab.html`:
 
-- `enzyme` and `organism`: a named enzyme and its reference organism, for example `enzyme=trypsin&organism=bovine`. The page looks up the reviewed UniProt active-site residues, checks them against the AlphaFold model, and fills the motif. If several enzymes match, it lists them and changes nothing.
+- `uniprot`: the accession of a reviewed enzyme with annotated catalytic residues, for example `uniprot=P00760`. This is exact and preferred. The page checks the residues against the AlphaFold model and fills the motif.
+- `enzyme` and `organism`: a named enzyme and its reference organism, for example `enzyme=trypsin&organism=bovine`. The page looks up the reviewed UniProt active-site residues the same way. If several enzymes match, it lists them and changes nothing.
 - `pdb` and optional `chain`: a PDB entry to load as the query, for example `pdb=4CHA`.
 - `motif`: query residues as chain letter plus residue number, with ranges for consecutive residues, for example `motif=B57,B102,C195` or `motif=A56-58,A101-103`.
 - `chemistry_positions`: residues whose chemistry must match, same format.

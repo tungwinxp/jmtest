@@ -8,14 +8,15 @@ async function json(url,signal){
   return response.json();
 }
 // Named enzymes use source annotations, never an enzyme-to-residue preset table.
-export async function lookupReference({name,organism,pdb_id},references,signal){
+export async function lookupReference({name,organism,pdb_id,accession},references,signal){
   signal=signal?AbortSignal.any([signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000);
   if(pdb_id)throw Error('Catalytic annotations are not supplied by the RCSB metadata tool. Provide an annotated UniProt enzyme name and organism, or verified PDB residue selections.');
-  if(!name||!organism)throw Error('Supply an enzyme name and its reference organism. The target database is a separate choice.');
-  const query=`protein_name:${quote(name)} AND organism_name:${quote(organism)} AND reviewed:true AND ft_act_site:*`;
+  if(!accession&&(!name||!organism))throw Error('Supply an enzyme name and its reference organism. The target database is a separate choice.');
+  // An accession names one reviewed entry exactly; a name and organism may match several.
+  const query=accession?`accession:${quote(accession)} AND reviewed:true AND ft_act_site:*`:`protein_name:${quote(name)} AND organism_name:${quote(organism)} AND reviewed:true AND ft_act_site:*`;
   const url='https://rest.uniprot.org/uniprotkb/search?'+new URLSearchParams({query,format:'json',size:'10'});
   const data=await json(url,signal),candidates=[],failures=[];
-  const matches=(data.results||[]).filter(entry=>normalize(entry.proteinDescription?.recommendedName?.fullName?.value||'').includes(normalize(name))&&!/\blike\b/i.test(entry.proteinDescription?.recommendedName?.fullName?.value||''));
+  const matches=(data.results||[]).filter(entry=>accession||normalize(entry.proteinDescription?.recommendedName?.fullName?.value||'').includes(normalize(name))&&!/\blike\b/i.test(entry.proteinDescription?.recommendedName?.fullName?.value||''));
   for(const entry of matches.slice(0,3)){
     try{
       const accession=entry.primaryAccession;

@@ -117,20 +117,22 @@
     const isolationReady='serviceWorker' in navigator
       ? navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready).catch(()=>null)
       : Promise.resolve(null);
-    // A link may carry a prepared query: enzyme+organism or pdb (+chain), then motif,
+    // A link may carry a prepared query: uniprot, enzyme+organism or pdb (+chain), then motif,
     // chemistry_positions, chemistry, rmsd, limit and db. It fills the form and never searches.
     const link=new URLSearchParams(location.search),param=key=>(link.get(key)||'').trim();
-    const prepared=['enzyme','organism','pdb','motif','chemistry_positions','chemistry','rmsd','limit','db'].some(key=>param(key));
+    const prepared=['uniprot','enzyme','organism','pdb','motif','chemistry_positions','chemistry','rmsd','limit','db'].some(key=>param(key));
     async function prepare(catalog){
       const api=window.jmfsGuideApi,notes=[],fields={},say=(message,error=false)=>{const line=document.getElementById('status');line.textContent=message;line.className='status'+(error?' error':'');};
       const idle=()=>{try{return !api.state().busy;}catch{return false;}};
       for(let i=0;i<300&&!idle();i++)await new Promise(resolve=>setTimeout(resolve,100));
       try{
-        if(param('enzyme')||param('organism')){
+        if(param('uniprot')||param('enzyme')||param('organism')){
           say('Looking up the reference enzyme…');
-          const {lookupReference}=await import('./ai/reference.js'),references=new Map(),found=await lookupReference({name:param('enzyme'),organism:param('organism')},references);
+          const {lookupReference}=await import('./ai/reference.js'),references=new Map(),accession=/^(?:[OPQ]\d[A-Z\d]{3}\d|[A-NR-Z]\d(?:[A-Z][A-Z\d]{2}\d){1,2})$/i.test(param('uniprot'))?param('uniprot').toUpperCase():'';
+          if(param('uniprot')&&!accession)throw Error('That is not a UniProt accession.');
+          const found=await lookupReference(accession?{accession}:{name:param('enzyme'),organism:param('organism')},references);
           // The same rule as the guide: one verified reference by name, never a guess.
-          const words=value=>value.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(),wanted=words(param('enzyme'));
+          const words=value=>value.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(),wanted=words(accession?'':param('enzyme'));
           const named=found.candidates.filter(c=>words(c.name)===wanted||words(c.name).startsWith(wanted+' ')),choices=named.length?named:found.candidates;
           if(choices.length!==1)throw Error(choices.length?'Several verified references match; name one of: '+choices.map(c=>c.name).join(', ')+'.':found.note);
           const reference=references.get(choices[0].reference_id);
