@@ -1,4 +1,4 @@
-import {createAgent} from './agent.js?v=33';
+import {createAgent} from './agent.js?v=34';
 import {loadLocalModel,guideGpuAvailable,MODEL_URL,forgetModel,removeRetiredModel} from './model.js?v=31';
 export async function mountGuide(api,config={},enabled=false){
   const panel=document.querySelector('.panel');
@@ -55,7 +55,7 @@ export async function mountGuide(api,config={},enabled=false){
     const priorTrace=agent.trace.slice();
     try{
       // Every guide action is chosen by the local model.
-      await agent.turn(text,llm||{createChatCompletion:async params=>{const model=await enable();return model.createChatCompletion(params);}},{signal:abort.signal,onText:value=>reply.textContent=value,onStatus:status});
+      await agent.turn(text,llm||{prepare:enable,createChatCompletion:async params=>{const model=await enable();return model.createChatCompletion(params);}},{signal:abort.signal,onText:value=>reply.textContent=value,onStatus:status});
       const actions=agent.trace.filter(item=>!priorTrace.includes(item));
       const addNote=text=>{const note=document.createElement('small');note.className='guideEvidence';note.textContent=text;reply.append(note);return note;};
       if(actions.some(a=>['run_jmfs_query','search_motif'].includes(a.name)&&!a.result.error)){

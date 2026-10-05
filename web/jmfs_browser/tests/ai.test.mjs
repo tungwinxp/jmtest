@@ -172,6 +172,10 @@ test('Small-model view calls keep what the chosen action takes; annotation answe
   await createAgent(api).turn('Show only the motif without side chains.',view({action:'motif',sidechains:false,hit_rank:1}));
   await createAgent(api).turn('Hide the target.',view({action:'target',target:false,sidechains:true}));
   assert.deepEqual(commands,[{action:'zoom',factor:2},{action:'select_hit',hit_rank:1},{action:'motif',sidechains:false},{action:'query'}]);
+  const prompts=[],record=backend=>({backend,createChatCompletion:async params=>{prompts.push(params);return view({action:'motif'}).createChatCompletion();}});
+  await createAgent(api).turn('Show just the motif.',record());await createAgent(api).turn('Show just the motif.',record('mlx'));
+  assert.doesNotMatch(prompts[0].messages[0].content,/Actions: motif/);assert.equal(prompts[0].max_tokens,128);
+  assert.match(prompts[1].messages[0].content,/Actions: motif shows only the motif/);assert.equal(prompts[1].max_tokens,192);
   const original=globalThis.fetch,site=position=>({type:'Binding site',location:{start:{value:position},end:{value:position}},ligand:{name:'Ca(2+)'},evidences:[{evidenceCode:'ECO:0000250',source:'UniProtKB',id:'P00760'}]});
   try{
     globalThis.fetch=async()=>Response.json({entryType:'UniProtKB reviewed (Swiss-Prot)',proteinDescription:{recommendedName:{fullName:{value:'Serine protease 1'}}},comments:[{commentType:'COFACTOR',cofactors:[{name:'Ca(2+)'}]}],features:[site(75),site(77)],keywords:[{name:'Calcium'}]});
@@ -183,5 +187,7 @@ test('Small-model view calls keep what the chosen action takes; annotation answe
     assert.match(seen[1].messages[0].content,/"binding_sites":\[\{"ligand":"Ca\(2\+\)","positions":"75,77","evidence":"by similarity"\}\]/);
     assert.equal(agent.trace[0].result.entries[0].binding_sites[0].evidences[0].id,'P00760');
     assert.deepEqual(forModel('run_jmfs_query',{status:'done'}),{status:'done'});
+    globalThis.fetch=async()=>new Response('',{status:500});let asked=0;
+    assert.match(await createAgent(api).turn('Do any of these hits bind calcium?',{createChatCompletion:async()=>{asked++;return {choices:[{message:{role:'assistant',tool_calls:[{id:'evidence',function:{name:'annotate_hits',arguments:'{}'}}]}}]};}}),/remain unknown/);assert.equal(asked,1);
   }finally{globalThis.fetch=original;}
 });

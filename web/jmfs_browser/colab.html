@@ -197,7 +197,7 @@
         if(guideReady)return guideReady;
         const button=optional.querySelector('button');button.disabled=true;
         guideReady=(async()=>{try{
-          const {mountGuide}=await import('./ai/assistant.js?v=33');
+          const {mountGuide}=await import('./ai/assistant.js?v=34');
           const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}));
           window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enabled);optional.remove();
           if(!enabled)document.getElementById('guideToggle').click();
