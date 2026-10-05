@@ -372,6 +372,7 @@ function listHits(){
 }
 async function search(override){
   if(busy)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
+  let result;
   try{
     const picked=databases.filter(db=>db.checked),other=$('index').value.trim();
     if(!override&&databases.length&&!picked.length&&!other)throw Error('Choose a database to search.');
@@ -383,9 +384,11 @@ async function search(override){
       index:[...picked.filter(db=>!db.blob).map(db=>db.url),other].filter(Boolean).join('\n'),
       ...(cfg.indexFile?{index_files:picked.filter(db=>db.blob).map(db=>db.blob)}:{})});
     if(data.error)throw Error(data.error);
-    return displayResults(data,submittedQuery);
+    result=displayResults(data,submittedQuery);
   }catch(e){status(e.message,true);throw e;}
   finally{busy=false;$('search').disabled=false;$('searchControls').hidden=true;$('searchProgress').hidden=$('searchEta').hidden=true;window.dispatchEvent(new Event('jmfs-job'));}
+  if(rows.length)await showScene(0);
+  return result;
 }
 function displayResults(data,query=queryState()){
     rows=data.rows;download=data.download;scene=null;shown=null;
@@ -558,7 +561,7 @@ window.jmfsGuideApi={
     const urls=payload.index.split('\n');databases.forEach(db=>db.checked=urls.includes(db.url)||payload.index_files?.some(file=>file.name===db.blob?.name));$('index').value=urls.filter(url=>!databases.some(db=>db.url===url)).join(';');listDatabases();
   },
   async restoreJob(saved){
-    await this.restoreJobQuery(saved);await window[cfg.transport].restore(saved);return displayResults(saved.result);
+    await this.restoreJobQuery(saved);await window[cfg.transport].restore(saved);const result=displayResults(saved.result);if(rows.length)await showScene(0);return result;
   },
 };
 loadQuery(Number($('source').value)).catch(()=>{});
