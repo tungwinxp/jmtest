@@ -221,6 +221,7 @@ function preview(){
 function gate(){const off=$('chemistry').value==='none';$('chemistryPositions').disabled=off;$('chemistryPositions').placeholder=off?'':'All motif residues';}
 async function loadQuery(i){
   const query=queries[i];
+  $('search').disabled=true;
   try{
     if(query.pdb==null){
       status('Loading '+query.label+'…');
@@ -228,12 +229,13 @@ async function loadQuery(i){
       if(!response.ok)throw Error(query.label+' could not be loaded ('+response.status+').');
       query.pdb=await response.text();status(ready);
     }
-  }catch(e){status(e.message,true);throw e;}
   if($('source').value!==String(i))return;
   $('pdb').value=query.pdb;$('motif').value=query.motif;$('chemistryPositions').value=query.chemistry_positions;
   $('chemistry').value=query.chemistry;gate();
   $('fileName').textContent=query.label;preview();
   if(query.chain&&queryViewer){previewChains=new Set([query.chain]);chainControls($('queryChains'),[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort(),previewChains,highlight,'Chain ');highlight();}
+  }catch(e){status(e.message,true);throw e;}
+  finally{if($('source').value===String(i)&&!busy&&!window.jmfsGuideBusy)$('search').disabled=false;}
 }
 // The example stands in until a real database is chosen.
 function dropExample(){if(databases.some(db=>db.example&&db.checked)){for(const db of databases)if(db.example)db.checked=false;listDatabases();}}
