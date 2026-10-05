@@ -399,3 +399,21 @@ Closed-tab Background Fetch and interrupted download/search checks are in
 Wrangler project. Compact evidence is saved in `tests/evidence/`.
 See [Chrome Background Fetch](https://developer.chrome.com/blog/background-fetch)
 for the browser-managed download lifecycle and its limitations.
+
+## Assistants (ChatGPT, Codex)
+
+An outside assistant can prepare a search and hand the user a link; the search still runs in the
+user's browser and the assistant never sees the results.
+
+- **Endpoint.** `https://jumpmaster-agent.tungwinxp.workers.dev/mcp` is a read-only MCP server
+  (Streamable HTTP, no sign-in) with three tools: `jumpmaster_databases`,
+  `jumpmaster_enzyme_reference` and `jumpmaster_search_link`. Source and tests are in
+  `agent_worker/`; deploy with `wrangler deploy --config agent_worker/wrangler.jsonc`.
+- **Codex.** `codex mcp add jumpmaster --url https://jumpmaster-agent.tungwinxp.workers.dev/mcp`.
+- **ChatGPT.** Enable developer mode in settings and add a connector with that URL and no
+  authentication (plans that offer developer mode).
+- **Links.** `colab.html` accepts `uniprot`, `enzyme` + `organism`, `pdb` (+ `chain`), `motif`,
+  `chemistry_positions`, `chemistry`, `rmsd`, `limit` and `db`. A link fills the form and never
+  starts a search. `llms.txt` documents the parameters for assistants.
+- **Scoring the local guide.** `tests/guide_eval/` holds 543 labelled commands and `score.mjs`,
+  which runs the real agent against a guide server on port 18773.
