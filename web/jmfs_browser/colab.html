@@ -64,7 +64,7 @@
       });
     };
     // Fetch the small form resources while the introduction is visible.
-    const resources=Promise.all([text('../../colab/app.html?v=32'),text('../../colab/scene.js?v=31'),listed()]);
+    const resources=Promise.all([text('../../colab/app.html?v=33'),text('../../colab/scene.js?v=31'),listed()]);
     resources.catch(()=>{});
     // Isolation is needed by browser AI, never a prerequisite for opening the form.
     const isolationReady='serviceWorker' in navigator

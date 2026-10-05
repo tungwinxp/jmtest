@@ -127,7 +127,7 @@ const queries=cfg.queries||[{label:'Serine protease motif',pdb:cfg.pdb,motif:'B5
 // must first be saved by the user and added as a file.
 const databases=(cfg.databases||[]).map(db=>({...db,blob:db.blob||(window.jmfsSavedIndexes||[]).find(file=>file.name===db.file)}));
 const sourceNames=new Map();
-let queryViewer,resultViewer,rows=[],download='',scene=null,shown=null,busy=false,lastSearch=null;
+let queryViewer,resultViewer,rows=[],download='',scene=null,shown=null,busy=false,loadingQuery=false,lastSearch=null;
 let previewChains=new Set(),sceneChains=new Set();
 let previewMotifOnly=false,previewAtoms=true;
 const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
@@ -221,7 +221,7 @@ function preview(){
 function gate(){const off=$('chemistry').value==='none';$('chemistryPositions').disabled=off;$('chemistryPositions').placeholder=off?'':'All motif residues';}
 async function loadQuery(i){
   const query=queries[i];
-  $('search').disabled=true;
+  loadingQuery=true;$('search').disabled=true;
   try{
     if(query.pdb==null){
       status('Loading '+query.label+'…');
@@ -235,7 +235,7 @@ async function loadQuery(i){
   $('fileName').textContent=query.label;preview();
   if(query.chain&&queryViewer){previewChains=new Set([query.chain]);chainControls($('queryChains'),[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort(),previewChains,highlight,'Chain ');highlight();}
   }catch(e){status(e.message,true);throw e;}
-  finally{if($('source').value===String(i)&&!busy&&!window.jmfsGuideBusy)$('search').disabled=false;}
+  finally{if($('source').value===String(i)){loadingQuery=false;$('search').disabled=busy||Boolean(window.jmfsGuideBusy);}}
 }
 // The example stands in until a real database is chosen.
 function dropExample(){if(databases.some(db=>db.example&&db.checked)){for(const db of databases)if(db.example)db.checked=false;listDatabases();}}
@@ -381,7 +381,7 @@ function listHits(){
 }
 async function search(override,fromGuide=false){
   if(window.jmfsGuideBusy&&!fromGuide)throw Error('Wait for the local guide, or stop it before starting a manual search.');
-  if(busy)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
+  if(busy||loadingQuery)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
   let result;
   try{
     const picked=databases.filter(db=>db.checked),other=$('index').value.trim();
@@ -480,7 +480,7 @@ window.jmfsGuideApi={
     $('source').append(new Option(label,i));$('source').value=String(i);await loadQuery(i);
     status('Loaded '+label+'. Select motif residues in the structure or type their ranges.');return queryState();
   },
-  state:()=>({query:queryState(),chemistry_help:$('chemistryHelp').textContent,busy,databases:databases.map((db,i)=>({id:String(i),name:db.name,available:Boolean(db.url||db.blob),example:Boolean(db.example)})),
+  state:()=>({query:queryState(),chemistry_help:$('chemistryHelp').textContent,busy:busy||loadingQuery,databases:databases.map((db,i)=>({id:String(i),name:db.name,available:Boolean(db.url||db.blob),example:Boolean(db.example)})),
     results:lastSearch?{...lastSearch,retained_placements:rows.length,targets_with_retained_hits:new Set(rows.map(r=>(r.source_index||'')+'\n'+r.target_id)).size,possibly_capped:rows.length>=lastSearch.query.limit,
       top_hits:rows.slice(0,10).map(r=>({...r,uniprot_accession:uniprot(r.target_id),annotation:describe(r)})),selected_hit:rows[shown]?{...rows[shown],uniprot_accession:uniprot(rows[shown].target_id),annotation:describe(rows[shown])}:null}:null,
     viewer:{hit_rank:shown===null?null:shown+1,chains:(resultViewer&&!$('scenePanel').hidden?resultViewer:queryViewer)?.getModel().selectedAtoms({}).filter(a=>!isMatch(a)).map(a=>a.chain).filter((c,i,list)=>list.indexOf(c)===i)||[],visible_chains:resultViewer?[...sceneChains]:[...previewChains],query:$('showQuery').checked,target:$('showTarget').checked,motif_only:resultViewer&&!$('scenePanel').hidden?$('motifOnly').checked:previewMotifOnly,sidechains:resultViewer&&!$('scenePanel').hidden?$('sideChains').checked:previewAtoms}}),
