@@ -1,7 +1,12 @@
 .guide h2{margin:0}.guide>.bar{justify-content:space-between}.guide #guideBody{margin-top:12px}
-.guide>.bar{border:1px solid var(--hairline);border-radius:6px;padding:10px}
+.guide{background:linear-gradient(#fafafa,#f4f5f4);border:1px solid #d9ddda;border-radius:12px;padding:14px!important;box-shadow:0 2px 6px #2021240b}
+.guide>.bar{border-bottom:1px solid var(--hairline);padding:0 0 10px}
 .guide .toggle{display:flex;align-items:center;gap:6px;margin:12px 0 6px;color:var(--ink)}
-#guideMessages{max-height:240px;overflow-y:auto;margin:12px 0;display:flex;flex-direction:column;gap:8px}
-#guideMessages p{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 0;border-bottom:1px solid var(--hairline)}
-#guideMessages .user{color:var(--muted)}#guideInput{height:76px;min-height:76px;font:13px/1.45 var(--sans);margin-bottom:8px}
+#guideMessages{max-height:360px;min-height:130px;overflow-y:auto;margin:16px 0;display:flex;flex-direction:column;gap:12px}
+#guideMessages p{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 14px;margin:0;border:1px solid #e1e4e1;border-radius:14px;max-width:88%;background:#fff;box-shadow:0 1px 2px #20212408}
+#guideMessages .assistant{align-self:flex-start;border-bottom-left-radius:4px}
+#guideMessages .user{align-self:flex-end;background:#e7ece6;border-color:#d8ded6;color:var(--ink);border-bottom-right-radius:4px}
+#guideMessages .assistant:empty::after{content:'Thinking…';color:var(--muted)}
+#guideInput{height:88px;min-height:88px;font:13px/1.45 var(--sans);margin:6px 0 8px;background:#fff;border:1px solid #c9ceca;border-radius:12px;padding:12px;box-shadow:inset 0 1px 3px #20212408;resize:vertical}
+#guideSend{background:#353936;color:#fff;border-radius:8px;padding:0 16px;height:32px}
 #guideForm .bar{gap:8px}.guide details{margin-top:8px}

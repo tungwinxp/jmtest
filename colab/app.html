@@ -69,7 +69,7 @@ body.bench{height:100dvh;overflow:hidden}
 <div><label for="chemistryPositions">Chemistry-gated residues</label><input id="chemistryPositions" class="data" type="text" spellcheck="false"></div></div>
 <details><summary>PDB text</summary><textarea id="pdb" spellcheck="false" aria-label="PDB query contents"></textarea><button id="preview">Update preview</button></details>
 </div><div id="querySlot"><figure id="queryFigure"><div id="queryViewer" class="viewer" aria-label="Query structure preview"></div>
-<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" data-chain-color="0" style="background:#f4adb3"></i>motif</span><span><i class="dot" data-color="chemistry" style="background:#9b6072"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
+<figcaption><div class="caption"><span id="fileName"></span><span><i class="dot" data-color="queryMatch" style="background:#f29bb0"></i>Query motif</span><span><i class="dot" data-color="chemistry" style="background:#c83d6f"></i>chemistry-gated</span><span>Click a residue to add or remove it.</span><div id="queryChains" class="toggles" aria-label="Query preview chains"></div></div></figcaption></figure></div></div></section>
 <section class="group"><h2>Databases</h2>
 <div id="databases" class="list" role="group" aria-label="Target databases" hidden></div>
 <p class="hint" id="indexHint">For your database, mount Google Drive and enter its index path. Public Folddisco databases are not JMFS indexes.</p>
@@ -92,8 +92,8 @@ body.bench{height:100dvh;overflow:hidden}
 <figcaption><div class="caption"><strong id="sceneStatus" class="data" role="status" aria-live="polite"></strong><a id="targetInfo" target="_blank" rel="noopener noreferrer" hidden>UniProt entry</a></div>
 <div id="about"></div><dl id="facts" class="caption"></dl>
 <div class="caption"><div class="toggles"><label><input id="showQuery" type="checkbox" checked><i class="dot" data-chain-color="0" style="background:#f4adb3"></i>Query</label><div id="resultQueryChains" class="toggles"></div></div>
-<div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" data-chain-color="1" style="background:#94c5cc"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
-<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" data-color="queryMatch" style="background:#9b6072"></i>matched query</span><span><i class="dot" data-color="targetMatch" style="background:#278b9b"></i>matched target</span></div>
+<div class="toggles"><label><input id="showTarget" type="checkbox" checked><i class="dot" data-color="target" style="background:#c9c9c9"></i>Target</label><div id="resultTargetChains" class="toggles"></div></div>
+<div class="toggles"><label><input id="motifOnly" type="checkbox">Motif only</label></div><span><i class="dot" data-color="queryMatch" style="background:#f29bb0"></i>Query motif</span><span><i class="dot" data-color="targetMatch" style="background:#969696"></i>Target match</span></div>
 <div class="caption">Superposition as exported by the JMFS CLI. Protein backbone and secondary structure may be estimated from indexed Cα coordinates (PULCHRA fragments), and RNA rebuilt from indexed C4′ atoms (Arena); DNA is not rebuilt. Hidden chains stay in the downloaded structure.</div></figcaption></figure></section>
 <p class="hint credit">Workflow after the <a href="https://search.foldseek.com/folddisco" target="_blank" rel="noopener">Folddisco server</a> and <a href="https://github.com/soedinglab/MMseqs2-App" target="_blank" rel="noopener">MMseqs2-App</a>. Searches use JMFS.</p>
 </div>
@@ -103,7 +103,17 @@ body.bench{height:100dvh;overflow:hidden}
 __JMFS_SCENE_JS__
 (() => {
 const cfg=JSON.parse(document.getElementById('config').textContent), $=id=>document.getElementById(id);
-try{const colors=JSON.parse(localStorage.getItem('jmfs-colors'));if(colors)globalThis.jmfsColors=colors;}catch{}
+try{
+  const colors=JSON.parse(localStorage.getItem('jmfs-colors'));
+  if(colors){
+    if(colors.version!==2){
+      if(colors.queryMatch==='#c83d6f')delete colors.queryMatch;
+      if(colors.targetMatch==='#4f7e4a')delete colors.targetMatch;
+      colors.version=2;localStorage.setItem('jmfs-colors',JSON.stringify(colors));
+    }
+    globalThis.jmfsColors=colors;
+  }
+}catch{}
 const make=(tag,props,...children)=>{const node=Object.assign(document.createElement(tag),props);node.append(...children);return node;};
 const ready=cfg.ready||'Search the example database, or select your own target index.';
 // A host may list its own built-in queries, each with its structure as text or as a URL.
@@ -134,7 +144,7 @@ function createViewer(id){
   let viewer;try{viewer=$3Dmol.createViewer($(id),{backgroundColor:'white'});}catch{}
   if(!viewer)throw Error('This browser cannot draw 3D structures (WebGL is unavailable).');
   const options=make('details',{className:'color-options',id:id+'Colors'},make('summary',{textContent:'Options',title:'Structure colors'}));
-  const fields=[['Chain 1','chain0'],['Chain 2','chain1'],['Chain 3','chain2'],['Chain 4','chain3'],['Query match','queryMatch'],['Target match','targetMatch'],['Chemistry','chemistry']];
+  const fields=[['Query chain 1','chain0'],['Query chain 2','chain1'],['Query chain 3','chain2'],['Query chain 4','chain3'],['Query motif','queryMatch'],['Target chains','target'],['Target match','targetMatch'],['Chemistry','chemistry']];
   const update=()=>{
     document.querySelectorAll('.color-options input').forEach(input=>{const key=input.dataset.color;input.value=key.startsWith('chain')?jmfsChainColor(Number(key.slice(5))):jmfsColor(key);});
     document.querySelectorAll('[data-chain-color]').forEach(dot=>dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor)));
@@ -143,7 +153,7 @@ function createViewer(id){
   };
   for(const [label,key] of fields){
     const input=make('input',{type:'color',value:key.startsWith('chain')?jmfsChainColor(Number(key.slice(5))):jmfsColor(key)});input.dataset.color=key;
-    input.oninput=()=>{globalThis.jmfsColors||={};if(key.startsWith('chain')){globalThis.jmfsColors.chains||=[0,1,2,3].map(jmfsChainColor);globalThis.jmfsColors.chains[Number(key.slice(5))]=input.value;}else globalThis.jmfsColors[key]=input.value;localStorage.setItem('jmfs-colors',JSON.stringify(globalThis.jmfsColors));update();};
+    input.oninput=()=>{globalThis.jmfsColors||={};globalThis.jmfsColors.version=2;if(key.startsWith('chain')){globalThis.jmfsColors.chains||=[0,1,2,3].map(jmfsChainColor);globalThis.jmfsColors.chains[Number(key.slice(5))]=input.value;}else globalThis.jmfsColors[key]=input.value;localStorage.setItem('jmfs-colors',JSON.stringify(globalThis.jmfsColors));update();};
     options.append(make('label',{},document.createTextNode(label),input));
   }
   const reset=make('button',{textContent:'Reset colors'});reset.onclick=()=>{globalThis.jmfsColors={};localStorage.removeItem('jmfs-colors');update();};options.append(reset);$(id).append(options);
@@ -157,11 +167,13 @@ function chainControls(container,chains,enabled,onchange,prefix=''){
     const label=document.createElement('label'),input=document.createElement('input');
     input.type='checkbox';input.checked=enabled.has(chain);input.dataset.chain=chain;
     input.onchange=()=>{if(input.checked)enabled.add(chain);else enabled.delete(chain);onchange();};
-    const dot=make('i',{className:'dot'});dot.dataset.chainColor=String(index+(chain.startsWith('target_')?1:0));dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor));
+    const dot=make('i',{className:'dot'});
+    if(chain.startsWith('target_')){dot.dataset.color='target';dot.style.background=jmfsColor('target');}
+    else{dot.dataset.chainColor=String(index);dot.style.background=jmfsChainColor(index);}
     label.append(input,dot,document.createTextNode(prefix+(chain.replace(/^(query|target)_/,'')||'(blank)')));container.append(label);
   }
 }
-// Each chain keeps its palette identity; chemistry gates use the darker pink.
+// Chain context is separate from the pink motif and dark-pink chemistry gates.
 function highlight(){
   if(!queryViewer)return;
   document.querySelectorAll('[data-chain-color]').forEach(dot=>dot.style.background=jmfsChainColor(Number(dot.dataset.chainColor)));
@@ -172,8 +184,8 @@ function highlight(){
   const chains=[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort();
   chains.forEach((chain,index)=>{
     queryViewer.setStyle({predicate:a=>shown(a)&&a.chain===chain},{cartoon:{color:jmfsChainColor(index),opacity:.85}});
-    queryViewer.setStyle({predicate:a=>shown(a)&&a.chain===chain&&within(motif,a)},paint(jmfsChainColor(index)));
   });
+  queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)},paint(jmfsColor('queryMatch')));
   if(gated)queryViewer.setStyle({predicate:a=>shown(a)&&within(motif,a)&&(!gates.length||within(gates,a))},paint(jmfsColor('chemistry')));
   queryViewer.render();
 }
@@ -186,10 +198,11 @@ function preview(){
     queryViewer.setClickable({},true,atom=>{
       if(!previewChains.has(atom.chain))return;
       const motif=ranges($('motif').value),chosen=new Set();
-      for(const a of queryViewer.getModel().selectedAtoms({atom:'CA'}))if(within(motif,a))chosen.add(a.chain+a.resi);
+      const anchors=queryViewer.getModel().selectedAtoms({predicate:a=>a.atom==='CA'||a.atom==="C4'"});
+      for(const a of anchors)if(within(motif,a))chosen.add(a.chain+a.resi);
       const key=atom.chain+atom.resi;
       if(chosen.has(key))chosen.delete(key);else chosen.add(key);
-      $('motif').value=[...chosen].join(',');highlight();
+      $('motif').value=jmfsMotifRanges(anchors.filter(a=>chosen.has(a.chain+a.resi)));highlight();
     });
     highlight();queryViewer.zoomTo();queryViewer.render();
   }catch(e){status(e.message,true);}
@@ -300,7 +313,7 @@ async function showScene(i){
     shown=i;prepareScene(data.secondary||secondarySpans(data.cif));contextStyle();resultViewer.resize();frameScene('',true);
     const row=rows[i],accession=uniprot(row.target_id);
     $('sceneStatus').textContent=targetName(row);$('sceneStatus').title='Structure export '+(1000*data.elapsed).toFixed(1)+' ms';
-    const facts=[['RMSD',Number(row.rmsd).toFixed(3)+' Å'],['Residues',residues(row).replaceAll(' ',', ')],['Sequence',String(row.seqout||'').replaceAll('/',' ')],['Database',databaseName(row)]];
+    const facts=[['RMSD',Number(row.rmsd).toFixed(3)+' Å'],['Query motif',lastSearch?.query.motif],['Residues',residues(row).replaceAll(' ',', ')],['Sequence',String(row.seqout||'').replaceAll('/',' ')],['Database',databaseName(row)]];
     $('facts').replaceChildren(...facts.filter(fact=>fact[1]).map(([name,value])=>make('div',{},make('dt',{textContent:name}),make('dd',{textContent:value}))));
     shown=i;$('about').textContent=describe(row);
     $('targetInfo').hidden=!accession;if(accession)$('targetInfo').href='https://www.uniprot.org/uniprotkb/'+accession+'/entry';
@@ -448,7 +461,56 @@ window.jmfsGuideApi={
   },
   state:()=>({query:queryState(),busy,databases:databases.map((db,i)=>({id:String(i),name:db.name,available:Boolean(db.url||db.blob),example:Boolean(db.example)})),
     results:lastSearch?{...lastSearch,retained_placements:rows.length,targets_with_retained_hits:new Set(rows.map(r=>(r.source_index||'')+'\n'+r.target_id)).size,possibly_capped:rows.length>=lastSearch.query.limit,
-      top_hits:rows.slice(0,10).map(r=>({...r,annotation:describe(r)})),selected_hit:rows[shown]?{...rows[shown],annotation:describe(rows[shown])}:null}:null}),
+      top_hits:rows.slice(0,10).map(r=>({...r,uniprot_accession:uniprot(r.target_id),annotation:describe(r)})),selected_hit:rows[shown]?{...rows[shown],uniprot_accession:uniprot(rows[shown].target_id),annotation:describe(rows[shown])}:null}:null,
+    viewer:{hit_rank:shown<0?null:shown+1,chains:resultViewer?[...sceneChains]:[...previewChains],query:$('showQuery').checked,target:$('showTarget').checked,motif_only:$('motifOnly').checked}}),
+  async viewerCommand(input){
+    if(busy)throw Error('Wait for the current search or structure to finish.');
+    const {action,hit_rank}=input;
+    if(hit_rank!==undefined){if(!rows[hit_rank-1])throw Error('That hit rank is unavailable.');await showScene(hit_rank-1);}
+    if(!resultViewer||document.querySelector('#scenePanel').hidden){
+      if(rows.length)await showScene(shown<0?0:shown);
+    }
+    const hit=Boolean(resultViewer&&!$('scenePanel').hidden),viewer=hit?resultViewer:queryViewer;
+    if(!viewer)throw Error('Load a structure first.');
+    if(action==='color'){
+      const field=document.querySelector('#'+(hit?'resultViewer':'queryViewer')+'Colors input[data-color="'+input.part+'"]');
+      if(!field||!/^#[\da-f]{6}$/i.test(input.color||''))throw Error('Choose a viewer color part and a six-digit hex color.');
+      field.value=input.color;field.dispatchEvent(new Event('input'));
+    }else if(action==='reset_colors')document.querySelector('#'+(hit?'resultViewer':'queryViewer')+'Colors button').click();
+    else if(action==='rotate')viewer.rotate(input.angle??90,input.axis??'y');
+    else if(action==='zoom')viewer.zoom(input.factor??1.5);
+    else if(action==='pan')viewer.translate(input.dx??0,input.dy??0);
+    else if(action==='download'){
+      if(!hit||!scene)throw Error('Select a hit before downloading its structure.');save(scene.name,scene.cif);
+    }else if(action==='select_hit'){if(hit_rank===undefined)throw Error('Supply a hit rank.');}
+    else if(hit){
+      if(['motif','whole','query','target'].includes(action)){
+        $('motifOnly').checked=action==='motif';$('showQuery').checked=action!=='target';$('showTarget').checked=action!=='query';
+      }
+      if(input.query!==undefined)$('showQuery').checked=input.query;
+      if(input.target!==undefined)$('showTarget').checked=input.target;
+      if(input.motif_only!==undefined)$('motifOnly').checked=input.motif_only;
+      if(input.chains){
+        const available=resultViewer.getModel().selectedAtoms({}).filter(a=>!isMatch(a)).map(a=>a.chain);
+        if(input.chains.some(c=>!available.includes(c)))throw Error('Use verified viewer chain IDs.');
+        sceneChains=new Set(input.chains);
+        document.querySelectorAll('#resultQueryChains input,#resultTargetChains input').forEach(i=>i.checked=sceneChains.has(i.dataset.chain));
+      }
+      contextStyle();if(action!=='visibility')frameScene(action==='query'?'query':action==='target'?'target':'',action==='motif'||action==='focus');
+    }else{
+      if(action==='target')throw Error('Run a search and select a target first.');
+      if(input.chains){
+        const available=queryViewer.getModel().selectedAtoms({}).map(a=>a.chain);
+        if(input.chains.some(c=>!available.includes(c)))throw Error('Use verified viewer chain IDs.');
+        previewChains=new Set(input.chains);document.querySelectorAll('#queryChains input').forEach(i=>i.checked=previewChains.has(i.dataset.chain));
+      }
+      highlight();
+      const sel={predicate:a=>previewChains.has(a.chain)&&(!['motif','focus'].includes(action)||within(ranges($('motif').value),a))};
+      if(action==='motif')queryViewer.setStyle({predicate:a=>!within(ranges($('motif').value),a)},{});
+      queryViewer.zoomTo(sel);
+    }
+    viewer.render();return this.state().viewer;
+  },
   async setQuery(draft){
     if(busy)throw Error('Wait for the current search or structure to finish.');
     // All options are checked before anything changes. Structures supply geometry, never AI.

@@ -73,8 +73,8 @@
     }
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=25"),
-        text("../../colab/scene.js?v=25"),
+        text("../../colab/app.html?v=27"),
+        text("../../colab/scene.js?v=27"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
@@ -141,10 +141,10 @@
         catch(error){document.getElementById('status').textContent=error.message;}
         finally{button.disabled=false;}
       };
-      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=25');document.head.append(style);
+      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=27');document.head.append(style);
       const {mountJobs}=await import('./jobs.js?v=25');
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
-      const {mountGuide}=await import('./ai/assistant.js?v=25');
+      const {mountGuide}=await import('./ai/assistant.js?v=27');
       const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
       window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {

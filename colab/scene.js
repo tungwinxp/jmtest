@@ -1,7 +1,18 @@
 // Shared molecular rendering for the native notebook and optional HTML form.
 // Brighter variants of the user's Ghibli palette, reserved for structures.
 function jmfsChainColor(index){return globalThis.jmfsColors?.chains?.[index%4]||['#f29bb0','#b7d69e','#f07f67','#a7b978'][index%4];}
-function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#c83d6f',chemistry:'#c83d6f',targetMatch:'#4f7e4a'}[name];}
+function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#f29bb0',chemistry:'#c83d6f',target:'#c9c9c9',targetMatch:'#969696'}[name];}
+// Viewer selections keep contiguous anchors together instead of creating singleton segments.
+function jmfsMotifRanges(anchors){
+  const runs=[],seen=new Set();
+  for(const a of anchors){
+    const key=a.chain+'\0'+a.resi;if(seen.has(key))continue;seen.add(key);
+    const last=runs.at(-1);
+    if(last&&last.chain===a.chain&&a.resi===last.end+1)last.end=a.resi;
+    else runs.push({chain:a.chain,start:a.resi,end:a.resi});
+  }
+  return runs.map(r=>r.chain+r.start+(r.end===r.start?'':'-'+r.end)).join(',');
+}
 function installJMFSScene(viewer, secondary, chainNames={}) {
   const atoms=viewer.getModel().selectedAtoms({});
   const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
@@ -75,11 +86,11 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     clearHover();
     enabled=new Set(chains);showQuery=query;showTarget=target;motifOnly=motif;
     viewer.setStyle({},{});
-    for(const [role,offset,opacity] of [['query',0,.85],['target',1,.85]]){
+    for(const role of ['query','target']){
       const chains=[...new Set(atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)).map(a=>a.chain))].sort();
-      chains.forEach((chain,index)=>viewer.setStyle({predicate:a=>visible(a)&&a.chain===chain}, {cartoon:{arrows:true,color:jmfsChainColor(index+offset),opacity}}));
+      chains.forEach((chain,index)=>viewer.setStyle({predicate:a=>visible(a)&&a.chain===chain}, {cartoon:{arrows:true,color:role==='target'?jmfsColor('target'):jmfsChainColor(index),opacity:.85}}));
       const motifColor=jmfsColor(role+'Match');
-      viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.18:.35},sphere:{color:motifColor,radius:role==='query'?.23:.36}});
+      viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.35:.18},sphere:{color:motifColor,radius:role==='query'?.36:.23}});
     }
     viewer.render();
   };
