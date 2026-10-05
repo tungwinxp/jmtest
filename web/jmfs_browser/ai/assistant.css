@@ -5,7 +5,7 @@
 .guidePrivacy{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.guidePrivacy details{margin:0!important}.guidePrivacy details[open]{max-width:70%}
 #guideMessages{max-height:260px;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px}
 #guideMessages p{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 10px;margin:0;border:1px solid #e1e4e1;border-radius:10px;max-width:92%;background:#fff;font-size:12px;line-height:1.5}
-#guideMessages .assistant{align-self:flex-start;border-bottom-left-radius:4px}
+#guideMessages .assistant{align-self:flex-start;background:#e3f2f3;border-color:#cde3e5;border-radius:14px;border-bottom-left-radius:4px}
 #guideMessages .user{align-self:flex-end;background:#e7ece6;border-color:#d8ded6;color:var(--ink);border-bottom-right-radius:4px}
 #guideMessages .assistant:empty::after{content:'Thinking…';color:var(--muted)}
 #guideInput{height:62px;min-height:62px;font:12px/1.45 var(--sans);margin:4px 0 6px;background:#fff;border:1px solid #c9ceca;border-radius:10px;padding:8px 10px;resize:vertical}

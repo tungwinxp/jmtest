@@ -22,7 +22,7 @@ export async function mountGuide(api,config={},enabled=false){
   $('guidePrivate').checked=localStorage.getItem('jmfs-guide-private')!=='off';
   $('guidePrivate').onchange=()=>localStorage.setItem('jmfs-guide-private',$('guidePrivate').checked?'on':'off');
   const say=(role,text)=>{const p=document.createElement('p');p.className=role;p.textContent=text;$('guideMessages').append(p);$('guideMessages').scrollTop=$('guideMessages').scrollHeight;return p;};
-  say('assistant','Ask me to find a motif, explain hits, or change the protein view. Example prompts are below.');
+  say('assistant','Hello! I’m your local JumpMASTER guide. I can help find motifs, explain hits, and adjust the protein view. Try an example below, or tell me what you’d like to explore.');
   $('guideMcp').value=config.rcsbMcpUrl||'';
   $('guideExample').onclick=event=>{event.preventDefault();$('guideInput').value='Search the catalytic motif of human chymotrypsin on the human database.';$('guideInput').focus();};
   box.querySelectorAll('.guidePrompt').forEach(link=>link.onclick=event=>{event.preventDefault();$('guideInput').value=link.dataset.prompt;$('guideInput').focus();});
@@ -74,7 +74,7 @@ export async function mountGuide(api,config={},enabled=false){
     async clearConversation(){
       if(turnBusy)throw Error('Stop the guide before clearing the conversation.');
       await agent.close();agent=createAgent(api,{...config,privateMode,rcsbMcpUrl:$('guideMcp').value.trim()});
-      $('guideMessages').replaceChildren();say('assistant','Conversation cleared. What would you like to do?');
+      $('guideMessages').replaceChildren();say('assistant','Hello! We’ve cleared the conversation. What would you like to explore?');
     },
     async forgetModel(url){
       if(turnBusy)throw Error('Stop the guide before removing its model.');
