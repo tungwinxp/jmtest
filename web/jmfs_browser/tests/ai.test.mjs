@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseHints,draftFromHints,makeTools} from '../ai/tools.js';
-import {createAgent} from '../ai/agent.js';
+import {createAgent,forModel} from '../ai/agent.js';
 import {pdbId,cifAtoms} from '../structure.js';
 import {parsePdb} from '../query.js';
 import {HttpRangeSource} from '../jmfs_index.js';
@@ -160,4 +160,27 @@ test('WebGPU streaming stops at one complete tool call before repeated output',a
   const response=await llm.createChatCompletion({tools:[{function:{name:'protein_view',parameters:{required:['action']}}}]});
   assert(cancelled);assert.equal(response.choices[0].message.tool_calls.length,1);
   assert.deepEqual(JSON.parse(response.choices[0].message.tool_calls[0].function.arguments),{action:'motif'});
+});
+
+test('Small-model view calls keep what the chosen action takes; annotation answers read compact records',async()=>{
+  const commands=[],state={query:{motif:'A1-3',chemistry_positions:'',database_ids:['0']},databases:[{id:'0',name:'Example',available:true,example:true}],viewer:{chains:['A']},
+    results:{query:{motif:'A1-3',limit:100},retained_placements:1,possibly_capped:false,top_hits:[{target_id:'AF-P12345-F1',rmsd:.5,uniprot_accession:'P12345'}]}};
+  const api={state:()=>state,viewerCommand:async input=>{commands.push(input);return {ok:true};}};
+  const view=args=>({createChatCompletion:async()=>({choices:[{message:{role:'assistant',tool_calls:[{id:'view',function:{name:'protein_view',arguments:JSON.stringify(args)}}]}}]})});
+  await createAgent(api).turn('Zoom in.',view({action:'zoom_in',factor:1,query:false,sidechains:false}));
+  await createAgent(api).turn('Show hit 1.',view({action:'select_hit',hit_rank:1,target:false,color:'red',dx:.5}));
+  await createAgent(api).turn('Show only the motif without side chains.',view({action:'motif',sidechains:false,hit_rank:1}));
+  assert.deepEqual(commands,[{action:'zoom',factor:2},{action:'select_hit',hit_rank:1},{action:'motif',sidechains:false}]);
+  const original=globalThis.fetch,site=position=>({type:'Binding site',location:{start:{value:position},end:{value:position}},ligand:{name:'Ca(2+)'},evidences:[{evidenceCode:'ECO:0000250',source:'UniProtKB',id:'P00760'}]});
+  try{
+    globalThis.fetch=async()=>Response.json({entryType:'UniProtKB reviewed (Swiss-Prot)',proteinDescription:{recommendedName:{fullName:{value:'Serine protease 1'}}},comments:[{commentType:'COFACTOR',cofactors:[{name:'Ca(2+)'}]}],features:[site(75),site(77)],keywords:[{name:'Calcium'}]});
+    const agent=createAgent(api),seen=[];
+    const llm={createChatCompletion:async params=>{seen.push(params);return {choices:[{message:seen.length===1?{role:'assistant',tool_calls:[{id:'evidence',function:{name:'annotate_hits',arguments:'{}'}}]}:{role:'assistant',content:'Serine protease 1 binds calcium by similarity.'}}]};}};
+    assert.equal(await agent.turn('Do any of these hits bind calcium?',llm),'Serine protease 1 binds calcium by similarity.');
+    assert.deepEqual(seen[0].tools.map(tool=>tool.function.name),['annotate_hits']);assert.doesNotMatch(seen[0].messages[0].content,/AF-P12345/);
+    assert.equal(seen[1].tools,undefined);assert.equal(seen[1].messages.length,2);
+    assert.match(seen[1].messages[0].content,/"binding_sites":\[\{"ligand":"Ca\(2\+\)","positions":"75,77","evidence":"by similarity"\}\]/);
+    assert.equal(agent.trace[0].result.entries[0].binding_sites[0].evidences[0].id,'P00760');
+    assert.deepEqual(forModel('run_jmfs_query',{status:'done'}),{status:'done'});
+  }finally{globalThis.fetch=original;}
 });

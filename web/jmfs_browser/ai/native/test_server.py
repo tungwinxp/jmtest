@@ -50,7 +50,18 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(json.loads(result['arguments']), {'name': 'chymotrypsin', 'database_ids': ['1']})
         self.assertIsNone(server.tool_call('<function name="search_motif">', tools))
         with self.assertRaises(ValueError): server.tool_call(text.replace('search_motif', 'unknown'), tools)
-        with self.assertRaises(ValueError): server.tool_call(text.replace('database_ids', 'arbitrary_path'), tools)
+        padded = server.tool_call(text.replace('database_ids', 'arbitrary_path'), tools)
+        self.assertEqual(json.loads(padded['arguments']), {'name': 'chymotrypsin'})
+        with self.assertRaises(ValueError): server.tool_call(text.replace('database_ids', 'name'), tools)
+
+    def test_small_model_values_are_normalised_or_left_for_schema_validation(self):
+        tools = [{'function': {'name': 'protein_view', 'parameters': {'properties': {
+            'action': {'type': 'string'}, 'target': {'type': 'boolean'}, 'chains': {'type': 'array'}, 'factor': {'type': 'number'}}}}}]
+        call = lambda body: json.loads(server.tool_call('<function name="protein_view">' + body + '</function>', tools)['arguments'])
+        self.assertEqual(call('<param name="action">query</param><param name="target">hide</param><param name="chains"></param>'),
+                         {'action': 'query', 'target': False})
+        self.assertEqual(call('<param name="action">zoom</param><param name="factor">2.0</param><param name="target">all</param>'),
+                         {'action': 'zoom', 'factor': 2.0, 'target': 'all'})
 
 
 if __name__ == '__main__': unittest.main()
