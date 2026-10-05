@@ -1,0 +1,236 @@
+{"text":"Search the catalytic motif of human chymotrypsin on the human database.","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"search bovine trypsin catalytic triad against afdb50","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Could you look for the catalytic residues of chymotrypsin from Homo sapiens in the example database?","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"run a search for the active site of rat trypsin in the human proteome","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"human"}}
+{"text":"Find matches to the catalytic motif of subtilisin from Bacillus amyloliquefaciens in AFDB50, please.","kind":"search","accept":{"tool":"search_motif","name":"subtilisin","organism":["bacillus amyloliquefaciens","b. amyloliquefaciens","bacillus"],"database":"afdb50"}}
+{"text":"pls scan the human proteome for the catalytic triad of the bovine enzyme chymotrypsin","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"I'd like to search the active-site motif of carbonic anhydrase 2 (human) against AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"carbonic anhydrase 2","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search for lysozyme's catalytic residues, chicken reference, in the example database","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["chicken","gallus gallus","hen","g. gallus"],"database":"example"}}
+{"text":"look for hits to the mouse acetylcholinesterase catalytic triad in the human database","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["mouse","mus musculus","murine","m. musculus"],"database":"human"}}
+{"text":"Run the catalytic motif of human thrombin against the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"thrombin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"search papain (Carica papaya) catalytic motif on afdb50","kind":"search","accept":{"tool":"search_motif","name":"papain","organism":["papaya","carica papaya","c. papaya"],"database":"afdb50"}}
+{"text":"Can you search the catalytic site of cathepsin B from rat in the human database?","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"human"}}
+{"text":"find matches for the yeast triosephosphate isomerase active site in AFDB50","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"afdb50"}}
+{"text":"Search E. coli alkaline phosphatase's catalytic motif against the example database.","kind":"search","accept":{"tool":"search_motif","name":"alkaline phosphatase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"example"}}
+{"text":"Please run a motif search using the catalytic residues of porcine elastase on the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"elastase","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"human"}}
+{"text":"scan afdb50 for the catalytic triad of trypsin, human reference","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Take the active site of bovine carbonic anhydrase 2 and search the human database","kind":"search","accept":{"tool":"search_motif","name":"carbonic anhydrase 2","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"search the demo database for the catalytic motif of human neutrophil elastase","kind":"search","accept":{"tool":"search_motif","name":"neutrophil elastase","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"Look for the catalytic dyad of human cathepsin K in AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"cathepsin k","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"run search: catalytic motif, pepsin A, pig, against human proteome","kind":"search","accept":{"tool":"search_motif","name":"pepsin a","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"human"}}
+{"text":"Would you search the human proteome with the catalytic residues of acetylcholinesterase from Torpedo californica?","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["torpedo californica","t. californica","torpedo","pacific electric ray","electric ray"],"database":"human"}}
+{"text":"find hits in the example database for the active site of thermolysin from Bacillus thermoproteolyticus","kind":"search","accept":{"tool":"search_motif","name":"thermolysin","organism":["bacillus thermoproteolyticus","b. thermoproteolyticus","bacillus"],"database":"example"}}
+{"text":"Search mouse cathepsin L catalytic motif in the human database.","kind":"search","accept":{"tool":"search_motif","name":"cathepsin l","organism":["mouse","mus musculus","murine","m. musculus"],"database":"human"}}
+{"text":"searching for the catalytic triad of subtilisin Carlsberg (Bacillus licheniformis) in afdb50 - please run it","kind":"search","accept":{"tool":"search_motif","name":"subtilisin carlsberg","organism":["bacillus licheniformis","b. licheniformis","bacillus"],"database":"afdb50"}}
+{"text":"Search the catalytic motif of rabbit triosephosphate isomerase on the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["rabbit","oryctolagus cuniculus","o. cuniculus"],"database":"human"}}
+{"text":"look for bovine thrombin active site matches in AFDB50","kind":"search","accept":{"tool":"search_motif","name":"thrombin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Run a search of human caspase-3's catalytic residues against the example database.","kind":"search","accept":{"tool":"search_motif","name":"caspase-3","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"pls serach the human databse for the catalytic motif of bovine ribonuclease A","kind":"search","accept":{"tool":"search_motif","name":"ribonuclease a","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"I want to find structural matches to the catalytic site of yeast enolase in afdb50; go ahead and search.","kind":"search","accept":{"tool":"search_motif","name":"enolase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"afdb50"}}
+{"text":"search e. coli beta-lactamase catalytic motif in the human proteome","kind":"search","accept":{"tool":"search_motif","name":"beta-lactamase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"human"}}
+{"text":"Scan the example database for the catalytic motif of horse alcohol dehydrogenase.","kind":"search","accept":{"tool":"search_motif","name":"alcohol dehydrogenase","organism":["horse","equus caballus","equine","e. caballus"],"database":"example"}}
+{"text":"Search human renin's catalytic aspartates against AFDB50","kind":"search","accept":{"tool":"search_motif","name":"renin","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"find the catalytic motif of chymosin (bovine) in the human database, run it now","kind":"search","accept":{"tool":"search_motif","name":"chymosin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"Could you please run a search for catalase from Bos taurus, catalytic residues only, on AFDB50?","kind":"search","accept":{"tool":"search_motif","name":"catalase","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"search in the human proteome for the active site motif of human cathepsin D","kind":"search","accept":{"tool":"search_motif","name":"cathepsin d","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"Search bovine carboxypeptidase A catalytic motif against the example database.","kind":"search","accept":{"tool":"search_motif","name":"carboxypeptidase a","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"look for matches to rat cathepsin B's catalytic residues in afdb50","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"afdb50"}}
+{"text":"Run trypsin from Sus scrofa (catalytic triad) against the human database.","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"human"}}
+{"text":"search the catalytic motif of chymotrypsin from cow on afdb50","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Find matches in the human proteome to the active site of human lysozyme.","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"search murine acetylcholinesterase catalytic motif on the example database","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["mouse","mus musculus","murine","m. musculus"],"database":"example"}}
+{"text":"Please search AFDB50 for the catalytic residues of triosephosphate isomerase from Saccharomyces cerevisiae.","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"afdb50"}}
+{"text":"run a search with human acetylcholinesterase's catalytic triad in the human proteome","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"Search the catalytic motif of E. coli triosephosphate isomerase in the example database.","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"example"}}
+{"text":"scan the human database for hits to the active site of papain from papaya","kind":"search","accept":{"tool":"search_motif","name":"papain","organism":["papaya","carica papaya","c. papaya"],"database":"human"}}
+{"text":"search for the catalytic motif of human cathepsin B on AFDB50","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Go ahead and search the human proteome for the catalytic triad of human trypsin.","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"find matches: bovine enteropeptidase catalytic motif, target afdb50, run the search","kind":"search","accept":{"tool":"search_motif","name":"enteropeptidase","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Search the example database for the catalytic residues of subtilisin from Bacillus subtilis.","kind":"search","accept":{"tool":"search_motif","name":"subtilisin","organism":["bacillus subtilis","b. subtilis","bacillus"],"database":"example"}}
+{"text":"Can we run the catalytic motif of human plasmin against the human database?","kind":"search","accept":{"tool":"search_motif","name":"plasmin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"search human urokinase catalytic triad agianst afdb50","kind":"search","accept":{"tool":"search_motif","name":"urokinase","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search rat elastase catalytic motif on the human proteome","kind":"search","accept":{"tool":"search_motif","name":"elastase","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"human"}}
+{"text":"Hi, could you search the catalytic motif of chicken triosephosphate isomerase in AFDB50?","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["chicken","gallus gallus","hen","g. gallus"],"database":"afdb50"}}
+{"text":"look for the active site of human caspase-1 in the example database and run the search","kind":"search","accept":{"tool":"search_motif","name":"caspase-1","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"search yeast hexokinase catalytic residues against the human proteome","kind":"search","accept":{"tool":"search_motif","name":"hexokinase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"human"}}
+{"text":"Run a catalytic motif search for glyceraldehyde-3-phosphate dehydrogenase (human) in AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"glyceraldehyde-3-phosphate dehydrogenase","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search the catalytic motif of rabbit aldolase on the human database.","kind":"search","accept":{"tool":"search_motif","name":"aldolase","organism":["rabbit","oryctolagus cuniculus","o. cuniculus"],"database":"human"}}
+{"text":"find hits for pig citrate synthase's catalytic residues in afdb50","kind":"search","accept":{"tool":"search_motif","name":"citrate synthase","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"afdb50"}}
+{"text":"search the human proteome using the catalytic motif of mouse renin","kind":"search","accept":{"tool":"search_motif","name":"renin","organism":["mouse","mus musculus","murine","m. musculus"],"database":"human"}}
+{"text":"Please look for the catalytic triad of thrombin, human enzyme, in the example database.","kind":"search","accept":{"tool":"search_motif","name":"thrombin","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"catalytic motif of bovine trypsin -> search human proteome","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"Search: chymotrypsin, human, AFDB50, catalytic motif.","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"I need the catalytic triad of the rat enzyme trypsin searched against the example database.","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"example"}}
+{"text":"Could you find proteins in the human proteome that share the catalytic motif of subtilisin from Bacillus amyloliquefaciens? Run the search.","kind":"search","accept":{"tool":"search_motif","name":"subtilisin","organism":["bacillus amyloliquefaciens","b. amyloliquefaciens","bacillus"],"database":"human"}}
+{"text":"search afdb50 with the active site of human carbonic anhydrase II","kind":"search","accept":{"tool":"search_motif","name":"carbonic anhydrase ii","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Run the lysozyme catalytic motif (reference: Gallus gallus) against the human database","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["chicken","gallus gallus","hen","g. gallus"],"database":"human"}}
+{"text":"search for acetylcholinesterase, Torpedo californica, catalytic triad, in afdb50","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["torpedo californica","t. californica","torpedo","pacific electric ray","electric ray"],"database":"afdb50"}}
+{"text":"find matches to bovine thrombin's active site in the example database please","kind":"search","accept":{"tool":"search_motif","name":"thrombin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"Search the catalytic motif of papain from Carica papaya on the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"papain","organism":["papaya","carica papaya","c. papaya"],"database":"human"}}
+{"text":"scan the example database for the human cathepsin B catalytic motif","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"search triosephosphate isomerase (rabbit) catalytic residues in afdb50","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["rabbit","oryctolagus cuniculus","o. cuniculus"],"database":"afdb50"}}
+{"text":"Run a search in the human database for the catalytic motif of alkaline phosphatase from Escherichia coli.","kind":"search","accept":{"tool":"search_motif","name":"alkaline phosphatase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"human"}}
+{"text":"looking for the catalytic triad of pig elastase in AFDB50 - search it","kind":"search","accept":{"tool":"search_motif","name":"elastase","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"afdb50"}}
+{"text":"Search human pepsin A catalytic motif against the example database","kind":"search","accept":{"tool":"search_motif","name":"pepsin a","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"can you search the human proteome for the catalytic motif of thermolysin (Bacillus thermoproteolyticus)","kind":"search","accept":{"tool":"search_motif","name":"thermolysin","organism":["bacillus thermoproteolyticus","b. thermoproteolyticus","bacillus"],"database":"human"}}
+{"text":"search cathepsin L from mouse, catalytic residues, afdb50","kind":"search","accept":{"tool":"search_motif","name":"cathepsin l","organism":["mouse","mus musculus","murine","m. musculus"],"database":"afdb50"}}
+{"text":"Please run the catalytic motif of human cathepsin K on the human database.","kind":"search","accept":{"tool":"search_motif","name":"cathepsin k","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"Find matches for subtilisin Carlsberg from Bacillus licheniformis in the example database.","kind":"search","accept":{"tool":"search_motif","name":"subtilisin carlsberg","organism":["bacillus licheniformis","b. licheniformis","bacillus"],"database":"example"}}
+{"text":"search the active site of caspase-3, human, against the human proteome","kind":"search","accept":{"tool":"search_motif","name":"caspase-3","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"run bovine ribonuclease A catalytic motif on afdb50","kind":"search","accept":{"tool":"search_motif","name":"ribonuclease a","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Search the catalytic motif of yeast enolase in the example database.","kind":"search","accept":{"tool":"search_motif","name":"enolase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"example"}}
+{"text":"search for beta-lactamase from E. coli (catalytic residues) in AFDB50","kind":"search","accept":{"tool":"search_motif","name":"beta-lactamase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"afdb50"}}
+{"text":"find the horse alcohol dehydrogenase active site in the human proteome, run the search","kind":"search","accept":{"tool":"search_motif","name":"alcohol dehydrogenase","organism":["horse","equus caballus","equine","e. caballus"],"database":"human"}}
+{"text":"Search the human database for the catalytic aspartates of human renin.","kind":"search","accept":{"tool":"search_motif","name":"renin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"look for chymosin from Bos taurus catalytic motif in afdb50, search now","kind":"search","accept":{"tool":"search_motif","name":"chymosin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"afdb50"}}
+{"text":"Run a search for human catalase catalytic residues in the example database.","kind":"search","accept":{"tool":"search_motif","name":"catalase","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"search afdb50 for cathepsin D (human) catalytic motif","kind":"search","accept":{"tool":"search_motif","name":"cathepsin d","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search carboxypeptidase A, bovine reference, against the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"carboxypeptidase a","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"search the catalytic triad of mouse trypsin in the example database","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["mouse","mus musculus","murine","m. musculus"],"database":"example"}}
+{"text":"please find matches to the catalytic motif of human chymotrypsin in the human proteome and run it","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"Search enteropeptidase (human) catalytic triad on AFDB50","kind":"search","accept":{"tool":"search_motif","name":"enteropeptidase","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"scan the human database with the catalytic motif of plasmin from bovine","kind":"search","accept":{"tool":"search_motif","name":"plasmin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"search the example database: urokinase catalytic triad, human enzyme","kind":"search","accept":{"tool":"search_motif","name":"urokinase","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"Run human neutrophil elastase's catalytic triad against AFDB50, thanks","kind":"search","accept":{"tool":"search_motif","name":"neutrophil elastase","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search the catalytic motif of caspase-1 from mouse on the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"caspase-1","organism":["mouse","mus musculus","murine","m. musculus"],"database":"human"}}
+{"text":"search hexokinase, yeast, catalytic residues, example database","kind":"search","accept":{"tool":"search_motif","name":"hexokinase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"example"}}
+{"text":"find hits for rabbit glyceraldehyde-3-phosphate dehydrogenase's catalytic site in the human database - run the search","kind":"search","accept":{"tool":"search_motif","name":"glyceraldehyde-3-phosphate dehydrogenase","organism":["rabbit","oryctolagus cuniculus","o. cuniculus"],"database":"human"}}
+{"text":"Search aldolase from rabbit (catalytic motif) in AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"aldolase","organism":["rabbit","oryctolagus cuniculus","o. cuniculus"],"database":"afdb50"}}
+{"text":"search the example database for citrate synthase catalytic residues, pig enzyme","kind":"search","accept":{"tool":"search_motif","name":"citrate synthase","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"example"}}
+{"text":"Could you run a motif search for human lysozyme's catalytic residues against AFDB50?","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search rat acetylcholinesterase catalytic triad in the human proteome","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"human"}}
+{"text":"search the catalytic motif of the E. coli enzyme alkaline phosphatase in afdb50","kind":"search","accept":{"tool":"search_motif","name":"alkaline phosphatase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"afdb50"}}
+{"text":"Run a search for the catalytic motif of trypsin (Bos taurus) in the example database.","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"look for human thrombin catalytic triad matches across AFDB50, please search","kind":"search","accept":{"tool":"search_motif","name":"thrombin","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"Search the human proteome for carbonic anhydrase 2 from Bos taurus, active-site residues.","kind":"search","accept":{"tool":"search_motif","name":"carbonic anhydrase 2","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"human"}}
+{"text":"search for chymotrypsin's catalytic triad (rat) in afdb50","kind":"search","accept":{"tool":"search_motif","name":"chymotrypsin","organism":["rat","rattus norvegicus","r. norvegicus"],"database":"afdb50"}}
+{"text":"find matches to yeast triosephosphate isomerase catalytic residues in the human database, pls search","kind":"search","accept":{"tool":"search_motif","name":"triosephosphate isomerase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"human"}}
+{"text":"Search cathepsin B, bovine, catalytic motif, example database.","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"run the catalytic motif of subtilisin (Bacillus subtilis) against the human proteome","kind":"search","accept":{"tool":"search_motif","name":"subtilisin","organism":["bacillus subtilis","b. subtilis","bacillus"],"database":"human"}}
+{"text":"Kindly search AFDB50 for the catalytic motif of papain from the papaya.","kind":"search","accept":{"tool":"search_motif","name":"papain","organism":["papaya","carica papaya","c. papaya"],"database":"afdb50"}}
+{"text":"search human trypsin catalytic motif on the example database","kind":"search","accept":{"tool":"search_motif","name":"trypsin","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"Search for the catalytic residues of mouse cathepsin B in the human proteome.","kind":"search","accept":{"tool":"search_motif","name":"cathepsin b","organism":["mouse","mus musculus","murine","m. musculus"],"database":"human"}}
+{"text":"scan afdb50 for the active site of pepsin A from pig","kind":"search","accept":{"tool":"search_motif","name":"pepsin a","organism":["pig","porcine","sus scrofa","s. scrofa"],"database":"afdb50"}}
+{"text":"Search the catalytic motif of elastase from Homo sapiens in the human database","kind":"search","accept":{"tool":"search_motif","name":"elastase","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"run a search on the example database for bovine catalase's catalytic residues","kind":"search","accept":{"tool":"search_motif","name":"catalase","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"search for the catalytic motif of thermolysin from Bacillus thermoproteolyticus on AFDB50","kind":"search","accept":{"tool":"search_motif","name":"thermolysin","organism":["bacillus thermoproteolyticus","b. thermoproteolyticus","bacillus"],"database":"afdb50"}}
+{"text":"Find structural matches to the catalytic triad of human enteropeptidase in the human proteome; please run the search.","kind":"search","accept":{"tool":"search_motif","name":"enteropeptidase","organism":["human","homo sapiens","h. sapiens"],"database":"human"}}
+{"text":"search lysozyme (human) catalytic motif in the example database","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["human","homo sapiens","h. sapiens"],"database":"example"}}
+{"text":"Search the catalytic motif of mouse acetylcholinesterase against AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"acetylcholinesterase","organism":["mouse","mus musculus","murine","m. musculus"],"database":"afdb50"}}
+{"text":"can u search the human database for the catalytic motif of yeast alcohol dehydrogenase","kind":"search","accept":{"tool":"search_motif","name":"alcohol dehydrogenase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"human"}}
+{"text":"Search the catalytic centre of human caspase-3 in AFDB50","kind":"search","accept":{"tool":"search_motif","name":"caspase-3","organism":["human","homo sapiens","h. sapiens"],"database":"afdb50"}}
+{"text":"search the human proteome for the catalytic centre of chicken lysozyme","kind":"search","accept":{"tool":"search_motif","name":"lysozyme","organism":["chicken","gallus gallus","hen","g. gallus"],"database":"human"}}
+{"text":"Run ribonuclease A (bovine) catalytic motif in the example database.","kind":"search","accept":{"tool":"search_motif","name":"ribonuclease a","organism":["bovine","bos taurus","cow","cattle","b. taurus"],"database":"example"}}
+{"text":"search beta-lactamase, E. coli, catalytic motif, human proteome","kind":"search","accept":{"tool":"search_motif","name":"beta-lactamase","organism":["e. coli","escherichia coli","e coli","ecoli"],"database":"human"}}
+{"text":"Search for hexokinase from Saccharomyces cerevisiae catalytic residues in AFDB50.","kind":"search","accept":{"tool":"search_motif","name":"hexokinase","organism":["yeast","saccharomyces cerevisiae","s. cerevisiae","baker's yeast","budding yeast"],"database":"afdb50"}}
+{"text":"look for the catalytic motif of renin (mouse) in afdb50 and search","kind":"search","accept":{"tool":"search_motif","name":"renin","organism":["mouse","mus musculus","murine","m. musculus"],"database":"afdb50"}}
+{"text":"Do any of these hits bind to sugars? Check the annotations and cite the evidence.","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which of these hits bind calcium?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What do these proteins do?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are any of the hits zinc-binding?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do the top hits have known ligands","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is there evidence that any of these bind ATP?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What is the function of the top hit?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"any metal binding sites annotated among the hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which hits have cofactors?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do these hits bind carbohydrates?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"are these enzymes or something else - what activity do they have","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Check the annotations: does anything here bind magnesium?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What's known about the catalytic activity of these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do any hits bind NAD or NADP?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are there annotated binding sites for the first five hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which hits are annotated as binding a ligand experimentally vs by similarity?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What does UniProt say these hits do?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"is hit 2 known to bind heme?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Any glycan-binding proteins among these?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do the hits share a function?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what ligands are annotated for the retained hits","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Could any of these bind nucleotides? What's the evidence?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which of the hits need a cofactor to work?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are any of these hits proteases by annotation?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is there annotation evidence for iron binding in the hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what is the biological function of the best-matching proteins?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do they bind dna?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"any evidence the hits bind RNA?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What are the annotated activities of the top ten hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which hits bind copper, if any?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Tell me what these hits bind.","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"are any of these lectins?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do the annotations mention substrate binding for any hit?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What cofactors do the hits use?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"is there evidence for manganese binding among these hits","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which of these have functional annotation at all?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what's the function of these matches, briefly","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do any of the retained hits bind glucose?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are the binding-site annotations experimental or inferred?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"any of them bind FAD?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which hits have annotated ligands and what are they?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Does the evidence support sugar binding for any of these proteins?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What do the top three hits bind?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"hits that bind phosphate - are there any?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is anything here a kinase according to the annotations?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Give me the functions of the hits with evidence.","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do any hits have calcium-binding annotations and what's the evidence code?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"are there ligand binding annotations for these","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What is known about ligand binding in these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which ones bind sodium or potassium ions?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do these proteins have a known catalytic activity?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Could you check whether the hits bind sialic acid?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"any evidence of mannose binding?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What functions are annotated for the hits I got?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do the hits include metalloenzymes?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"is any hit annotated to bind a peptide ligand","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which of the hits are hydrolases by function?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What does the evidence say about cofactor binding here?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do any of these bind lipids?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are there hits with zinc site annotations?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what are these proteins' roles?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Please check the annotations for nucleotide binding among the hits.","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Any hit that binds GTP?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"functional annotation for these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do any bind chloride?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which hits are annotated with binding sites for metals?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"is there evidence for substrate or inhibitor binding in the top hits","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What activity is annotated for the second hit?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do the hits bind pyridoxal phosphate?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"are any of the hits known to bind galactose","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What ligand evidence exists for these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which proteins among the hits have a function related to digestion?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do any of the hits bind coenzyme A?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what do they do in the cell?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is calcium a cofactor for any of them?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Any annotated function for hit 4?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do these hits bind any sugars at all, like fucose or lactose?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What's the evidence that these proteins bind ligands?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"which of these are annotated as binding S-adenosylmethionine?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are these hits functionally characterised?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are the hits functionally characterized, and what do they bind?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is there any binding annotation for the hits, experimental only?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what metals do these proteins bind","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do any hits have iron-sulfur cluster annotations?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Check function and ligand binding for the top hits, please.","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what's the annotated activity of the hits and is it backed by evidence","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Does any hit bind heparin?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which hits bind nickel or cobalt?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do the hits have annotated cofactors like FMN?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"any hits with ATP binding sites?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"I'm curious whether these hits bind carbohydrate - what do the annotations say?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"whats the function of hit 1","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do these bind oligosaccharides?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are any of the top hits annotated as binding a metal ion by similarity only?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What do the annotations say about the molecular function of each hit?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which hits lack any binding annotation?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do any of the proteins bind chitin?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Is there evidence for haem binding in these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"are there nucleic acid binding annotations","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"What ligands, if any, do the first few hits bind according to the evidence?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Do you see any sugar-binding evidence for these hits?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Can you tell me which hits bind zinc and how strong the evidence is?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"list the functions of the hits","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Which of the hits are annotated with catalytic activity toward peptides?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Any evidence these bind cellulose or other polysaccharides?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"do the hits have known binding partners or ligands?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"tell me about ligand binding for these hits pls","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Does the top hit bind a metal?","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"what is annotated for these proteins in terms of function and binding","kind":"annotate","accept":{"tool":"annotate_hits"}}
+{"text":"Are any hits glycosidases, judging from the functional annotation?","kind":"annotate","accept":{"tool":"annotate_hits"}}

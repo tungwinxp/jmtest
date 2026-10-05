@@ -8,6 +8,7 @@
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js" as="script" crossorigin="anonymous">
   <style>
     body{margin:0;background:#fff;color:#202124;font:13px/1.45 system-ui,sans-serif}
+    #intro a{color:inherit;text-underline-offset:2px}#intro a:focus-visible{outline:2px solid #3c4043;outline-offset:2px}
     /* Landing screen only. Every rule is scoped to #intro, which is removed when the workbench opens. */
     #intro{position:relative;box-sizing:border-box;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:32px 20px;overflow:hidden;font-size:15px;line-height:1.6}
     #intro .bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;animation:jm-fade .6s ease-out both}
@@ -60,7 +61,7 @@
       <p id="introText" style="--i:2">Find similar structural motifs across protein and nucleic acid databases. Searches run locally on your computer. Models, structures and database data download when needed, then stay cached in your browser.</p>
       <ul style="--i:3"><li>Runs locally</li><li>Files stay on your computer</li><li>Cached for next time</li></ul>
       <div class="actions" style="--i:4"><button id="next">Open the workbench</button><button id="enableGuide">Enable the local AI guide</button></div>
-      <p class="note" style="--i:5">The guide is optional: an on-device model (about 0.7&nbsp;GB, downloaded once) that helps you prepare searches and interpret results.</p>
+      <p class="note" style="--i:5">The guide is optional: an on-device model (about 0.7&nbsp;GB, downloaded once) that helps you prepare searches and interpret results. Or <a href="./llms.txt">connect your own ChatGPT or Codex</a>.</p>
       <p id="boot" role="status"></p>
     </div>
   </main>
@@ -116,6 +117,41 @@
     const isolationReady='serviceWorker' in navigator
       ? navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready).catch(()=>null)
       : Promise.resolve(null);
+    // A link may carry a prepared query: enzyme+organism or pdb (+chain), then motif,
+    // chemistry_positions, chemistry, rmsd, limit and db. It fills the form and never searches.
+    const link=new URLSearchParams(location.search),param=key=>(link.get(key)||'').trim();
+    const prepared=['enzyme','organism','pdb','motif','chemistry_positions','chemistry','rmsd','limit','db'].some(key=>param(key));
+    async function prepare(catalog){
+      const api=window.jmfsGuideApi,notes=[],fields={},say=(message,error=false)=>{const line=document.getElementById('status');line.textContent=message;line.className='status'+(error?' error':'');};
+      const idle=()=>{try{return !api.state().busy;}catch{return false;}};
+      for(let i=0;i<300&&!idle();i++)await new Promise(resolve=>setTimeout(resolve,100));
+      try{
+        if(param('enzyme')||param('organism')){
+          say('Looking up the reference enzyme…');
+          const {lookupReference}=await import('./ai/reference.js'),references=new Map(),found=await lookupReference({name:param('enzyme'),organism:param('organism')},references);
+          // The same rule as the guide: one verified reference by name, never a guess.
+          const words=value=>value.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(),wanted=words(param('enzyme'));
+          const named=found.candidates.filter(c=>words(c.name)===wanted||words(c.name).startsWith(wanted+' ')),choices=named.length?named:found.candidates;
+          if(choices.length!==1)throw Error(choices.length?'Several verified references match; name one of: '+choices.map(c=>c.name).join(', ')+'.':found.note);
+          const reference=references.get(choices[0].reference_id);
+          await api.loadStructure({...reference,reference_id:choices[0].reference_id});
+          Object.assign(fields,{motif:reference.motif,chemistry_positions:reference.chemistry_positions,chemistry:reference.chemistry});
+        }else if(param('pdb')){say('Loading '+param('pdb')+'…');await api.loadStructure({...await fetchStructure(param('pdb'),param('chain')),pdb_id:param('pdb')});}
+        const selection=value=>value.length<=200&&/^[A-Za-z_]+\d+(?:-\d+)?(?:,[A-Za-z_]+\d+(?:-\d+)?)*$/.test(value),rmsd=Number(param('rmsd')),limit=Number(param('limit'));
+        const take=(key,ok,value=param(key))=>{if(!param(key))return;if(ok)fields[key]=value;else notes.push(key);};
+        take('motif',selection(param('motif')));take('chemistry_positions',selection(param('chemistry_positions')));
+        take('chemistry',['none','exact','reduced'].includes(param('chemistry')));
+        take('rmsd',rmsd>=.001&&rmsd<=100,rmsd);take('limit',Number.isInteger(limit)&&limit>=1&&limit<=10000,limit);
+        if(param('db')){
+          const files=new Map(catalog.map(db=>[db.name,db.file||''])),keys=param('db').toLowerCase().split(',').map(key=>key.trim()).filter(Boolean);
+          const hits=keys.map(key=>api.state().databases.filter(db=>db.available&&(db.name+' '+(files.get(db.name)||'')).toLowerCase().includes(key==='human'?'homo sapiens':key)));
+          const ids=[...new Set(hits.flat().map(db=>db.id))],missing=keys.filter((key,i)=>!hits[i].length);
+          if(missing.length)notes.push('db (no listed database matches '+missing.join(', ')+')');else if(ids.length>4)notes.push('db (more than four databases match)');else fields.database_ids=ids;
+        }
+        if(Object.keys(fields).length)await api.setQuery(fields);
+        say('Prepared from a link.'+(notes.length?' Ignored: '+notes.join(', ')+'.':'')+' Review the query, then press Search.');
+      }catch(error){say('This link could not be prepared: '+error.message,true);}
+    }
     async function start(enableGuide=false){
     document.getElementById('boot').textContent='Opening the workbench…';document.getElementById('intro').classList.add('opening');
     document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
@@ -211,6 +247,7 @@
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
       // Fetch the search core while idle so the first Search does not wait for it.
       document.head.append(Object.assign(document.createElement('link'),{rel:'prefetch',href:here('./assets/jmfs_web_core.wasm?v=22')}));
+      if(prepared)await prepare(config.databases);
     } catch (error) {
       document.getElementById('intro')?.classList.remove('opening');
       const status=document.getElementById('boot')||document.getElementById('status');status.textContent=`The JMFS interface could not start: ${error.message}`;
@@ -220,6 +257,7 @@
     document.getElementById('enableGuide').onclick=()=>start(true);
     const resume=sessionStorage.getItem('jmfs-isolation-reload');
     if(resume){sessionStorage.removeItem('jmfs-isolation-reload');start(resume==='guide');}
+    else if(prepared)start(false);
   </script>
 </body>
 </html>

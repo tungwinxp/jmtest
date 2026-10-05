@@ -1,0 +1,44 @@
+# JumpMASTER
+
+> JumpMASTER finds similar structural motifs in protein and nucleic acid structure databases. The website runs every search locally in the visitor's browser (WebGPU or CPU); structures, queries and results are not uploaded.
+
+This file tells an AI assistant how to help someone use the site. An assistant prepares a search and hands the person a link; the person opens it and presses Search. The assistant cannot see the results unless the person pastes them back.
+
+## Connect an assistant
+
+A read-only MCP server, with no sign-in, is at:
+
+    https://jumpmaster-agent.tungwinxp.workers.dev/mcp
+
+- Codex: `codex mcp add jumpmaster --url https://jumpmaster-agent.tungwinxp.workers.dev/mcp`
+- ChatGPT (plans with developer mode): Settings, enable developer mode, add a custom connector with that URL and no authentication.
+- Any other MCP client that speaks Streamable HTTP can use the same URL.
+
+Tools:
+
+- `jumpmaster_databases`: the databases the site can search, with sizes.
+- `jumpmaster_enzyme_reference(enzyme, organism)`: reviewed UniProt entries with annotated catalytic residues. Give the enzyme name without the species.
+- `jumpmaster_search_link(...)`: builds the link described below.
+
+## Prepared-search links
+
+An assistant without MCP can build the link itself. Add query parameters to
+`https://tungwinxp.github.io/jmtest/web/jmfs_browser/colab.html`:
+
+- `enzyme` and `organism`: a named enzyme and its reference organism, for example `enzyme=trypsin&organism=bovine`. The page looks up the reviewed UniProt active-site residues, checks them against the AlphaFold model, and fills the motif. If several enzymes match, it lists them and changes nothing.
+- `pdb` and optional `chain`: a PDB entry to load as the query, for example `pdb=4CHA`.
+- `motif`: query residues as chain letter plus residue number, with ranges for consecutive residues, for example `motif=B57,B102,C195` or `motif=A56-58,A101-103`.
+- `chemistry_positions`: residues whose chemistry must match, same format.
+- `chemistry`: `none` (shape only), `exact` (same residue type) or `reduced` (similar residue groups).
+- `rmsd`: cutoff in Å. `limit`: number of hits kept.
+- `db`: comma-separated keywords matched against database names or files, for example `db=homo sapiens` or `db=example`.
+
+A link never starts a search. Example:
+
+    https://tungwinxp.github.io/jmtest/web/jmfs_browser/colab.html?pdb=4CHA&motif=B57,B102,C195&chemistry_positions=B57,B102,C195&chemistry=exact&db=example
+
+## Rules for assistants
+
+- Do not invent residue numbers. Use annotated catalytic residues or residues the person supplies.
+- A similar shape does not prove shared function, and a missing annotation is not evidence of no binding.
+- Large databases are read over the network by the person's browser; suggest the smallest database that answers the question.
