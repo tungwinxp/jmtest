@@ -58,10 +58,10 @@
     <div class="card">
       <img id="introLogo" src="./assets/logo.svg" alt="JumpMASTER" width="72" height="91">
       <h1 style="--i:1">Welcome to JumpMASTER</h1>
-      <p id="introText" style="--i:2">Find similar structural motifs across protein and nucleic acid databases. Searches run locally on your computer. Models, structures and database data download when needed, then stay cached in your browser.</p>
+      <p id="introText" style="--i:2">Find similar structural motifs across protein and nucleic acid databases. Searches run locally on your computer. Structures and database data download when needed, then stay cached in your browser.</p>
       <ul style="--i:3"><li>Runs locally</li><li>Files stay on your computer</li><li>Cached for next time</li></ul>
-      <div class="actions" style="--i:4"><button id="next">Open the workbench</button><button id="enableGuide">Enable the local AI guide</button></div>
-      <p class="note" style="--i:5">The guide is optional: an on-device model (about 0.7&nbsp;GB, downloaded once) that helps you prepare searches and interpret results. Or <a href="./llms.txt">connect your own ChatGPT or Codex</a>.</p>
+      <div class="actions" style="--i:4"><button id="next">Open the workbench</button></div>
+      <p class="note" style="--i:5">Using ChatGPT or Codex? <a href="./llms.txt">They can prepare a search for you</a>.</p>
       <p id="boot" role="status"></p>
     </div>
   </main>
@@ -111,12 +111,10 @@
       });
     };
     // Fetch the small form resources while the introduction is visible.
-    const resources=Promise.all([text('../../colab/app.html?v=33'),text('../../colab/scene.js?v=31'),listed()]);
+    const resources=Promise.all([text('../../colab/app.html?v=36'),text('../../colab/scene.js?v=31'),listed()]);
     resources.catch(()=>{});
-    // Isolation is needed by browser AI, never a prerequisite for opening the form.
-    const isolationReady='serviceWorker' in navigator
-      ? navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready).catch(()=>null)
-      : Promise.resolve(null);
+    // The service worker only finishes index downloads that continue after the page closes.
+    navigator.serviceWorker?.register('./download_worker.js',{scope:'./',type:'module',updateViaCache:'none'}).catch(()=>{});
     // A link may carry a prepared query: uniprot, enzyme+organism or pdb (+chain), then motif,
     // chemistry_positions, chemistry, rmsd, limit and db. It fills the form and never searches.
     const link=new URLSearchParams(location.search),param=key=>(link.get(key)||'').trim();
@@ -128,10 +126,10 @@
       try{
         if(param('uniprot')||param('enzyme')||param('organism')){
           say('Looking up the reference enzyme…');
-          const {lookupReference}=await import('./ai/reference.js'),references=new Map(),accession=/^(?:[OPQ]\d[A-Z\d]{3}\d|[A-NR-Z]\d(?:[A-Z][A-Z\d]{2}\d){1,2})$/i.test(param('uniprot'))?param('uniprot').toUpperCase():'';
+          const {lookupReference}=await import('./reference.js'),references=new Map(),accession=/^(?:[OPQ]\d[A-Z\d]{3}\d|[A-NR-Z]\d(?:[A-Z][A-Z\d]{2}\d){1,2})$/i.test(param('uniprot'))?param('uniprot').toUpperCase():'';
           if(param('uniprot')&&!accession)throw Error('That is not a UniProt accession.');
           const found=await lookupReference(accession?{accession}:{name:param('enzyme'),organism:param('organism')},references);
-          // The same rule as the guide: one verified reference by name, never a guess.
+          // One verified reference by name, never a guess.
           const words=value=>value.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(),wanted=words(accession?'':param('enzyme'));
           const named=found.candidates.filter(c=>words(c.name)===wanted||words(c.name).startsWith(wanted+' ')),choices=named.length?named:found.candidates;
           if(choices.length!==1)throw Error(choices.length?'Several verified references match; name one of: '+choices.map(c=>c.name).join(', ')+'.':found.note);
@@ -154,13 +152,9 @@
         say('Prepared from a link.'+(notes.length?' Ignored: '+notes.join(', ')+'.':'')+' Review the query, then press Search.');
       }catch(error){say('This link could not be prepared: '+error.message,true);}
     }
-    async function start(enableGuide=false){
+    async function start(){
     document.getElementById('boot').textContent='Opening the workbench…';document.getElementById('intro').classList.add('opening');
-    document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
-    if(enableGuide&&!crossOriginIsolated&&!resume){
-      await Promise.race([isolationReady,new Promise(resolve=>setTimeout(resolve,1000))]);
-      if(navigator.serviceWorker?.controller){sessionStorage.setItem('jmfs-isolation-reload','guide');location.reload();return;}
-    }
+    document.getElementById('next').disabled=true;
     try {
       const [template, sceneJs, catalog] = await resources;
       const demoIndexUrl = here("./assets/demo.jmfsgeom?v=29");
@@ -225,27 +219,7 @@
         catch(error){document.getElementById('status').textContent=error.message;}
         finally{button.disabled=false;}
       };
-      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=29');document.head.append(style);
-      const {mountJobs}=await import('./jobs.js?v=32');
-      const optional=document.createElement('section');optional.className='group guide';
-      optional.innerHTML='<div class="bar"><h2>Local AI Guide</h2><button>Open guide</button></div>';
-      document.querySelector('.panel header').after(optional);
-      let guideReady;
-      const openGuide=async(enabled=false)=>{
-        if(guideReady)return guideReady;
-        const button=optional.querySelector('button');button.disabled=true;
-        guideReady=(async()=>{try{
-          const {mountGuide}=await import('./ai/assistant.js?v=35');
-          const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}));
-          window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enabled);optional.remove();
-          if(!enabled)document.getElementById('guideToggle').click();
-          return window.jmfsGuide;
-        }catch(error){guideReady=null;button.disabled=false;document.getElementById('status').textContent='Optional AI guide unavailable: '+error.message;throw error;}})();
-        return guideReady;
-      };
-      window.jmfsOpenGuide=openGuide;
-      optional.querySelector('button').onclick=()=>openGuide().catch(()=>{});
-      if(enableGuide)openGuide(true).catch(()=>{});
+      const {mountJobs}=await import('./jobs.js?v=36');
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
       // Fetch the search core while idle so the first Search does not wait for it.
       document.head.append(Object.assign(document.createElement('link'),{rel:'prefetch',href:here('./assets/jmfs_web_core.wasm?v=22')}));
@@ -255,11 +229,8 @@
       const status=document.getElementById('boot')||document.getElementById('status');status.textContent=`The JMFS interface could not start: ${error.message}`;
     }
     }
-    document.getElementById('next').onclick=()=>start(false);
-    document.getElementById('enableGuide').onclick=()=>start(true);
-    const resume=sessionStorage.getItem('jmfs-isolation-reload');
-    if(resume){sessionStorage.removeItem('jmfs-isolation-reload');start(resume==='guide');}
-    else if(prepared)start(false);
+    document.getElementById('next').onclick=()=>start();
+    if(prepared)start();
   </script>
 </body>
 </html>

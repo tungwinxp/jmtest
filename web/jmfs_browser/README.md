@@ -59,102 +59,31 @@ mode. Non-approximate requests keep the existing fallback behavior.
 
 ## The Colab form as a website
 
-The landing page offers the workbench or an optional Local AI Guide. The guide uses
-model-generated function calls to update the same visible form and invoke its Search
-action. Scientific acceptance remains in the shared Rust core. An example link only
-fills the composer. There is no enzyme-specific prompt route or residue preset in
-the guide.
+The landing page opens the workbench. There is no on-device language model, and the page
+never contacts a program on the visitor's computer, so the browser shows no local-network
+permission prompt. Outside assistants can prepare a search through a link; see
+"Assistants (ChatGPT, Codex)" below.
 
-MiniCPM5 1B at 4-bit is the guide model. On Apple Silicon, start the optional
-native MLX companion from this checkout before enabling the guide:
+The workbench opens independently of service-worker readiness. Opening it does not compile
+search WASM or probe a GPU adapter; the search core is prefetched while idle and Search
+initializes its executor on demand. A Web Lock permits only one JMFS compute tab per origin
+and browser profile. It does not control other applications or profiles. The service worker
+only finishes index downloads that continue after the page closes; it adds no isolation
+headers. Run the input and range checks with `npm test`.
 
-```sh
-sh web/jmfs_browser/ai/native/start.sh
-```
-
-It binds only `127.0.0.1:18773`, accepts the deployed site and local test origins,
-and downloads `mlx-community/MiniCPM5-1B-4bit`, revision
-`36447e84d28c57588a6e91907675e44afe54ab00` (608 MB weights, about 618 MB including
-tokenizer), into `ai/native/.cache`. MLX 0.32.3 and mlx-lm 0.32.0 live in
-`ai/native/.venv`. Ctrl-C stops the companion. It offers fixed-model inference
-only; browser tools perform all validated actions. A process lock and request
-lock prevent duplicate native servers and simultaneous native inference.
-
-Without the companion, compatible Apple Metal or NVIDIA WebGPU adapters use
-`ewin-reg/MiniCPM5-1B-Agentic-Tooluse-v3-GGUF`, revision
-`b8ed16e7a7423b409e321fc9ba30f2004ceacb67`, Q4_K_M (688,065,856 bytes), through
-Wllama 3.8.1. The native base model and browser tool-use fine-tune are different
-checkpoints. The browser selector requires a non-fallback adapter and at least
-4 GiB reported device memory. Unsupported browsers require the companion.
-The publisher reports repeated output from the tool-use fine-tune, so streaming
-stops at the first complete tool call; schemas still validate every action.
-Native XML function calls are parsed with the standard library, restricted to
-declared tools and parameters, then validated by the browser.
-
-MiniCPM inference throughput and command accuracy have not yet been measured on
-this Mac. Existing Gemma, Qwen and Liquid diagnostic records are historical;
-they do not establish MiniCPM performance or reduced heat. Qwen is removed;
-opening the guide deletes only its identified browser cache and download job.
-Other model copies can be removed individually from Local storage.
-
-The workbench opens independently of AI and service-worker readiness. Opening
-it does not compile search WASM, probe a GPU adapter or load an AI runtime.
-Search initializes its executor on demand; the guide module opens only when
-requested. Browser AI requires cross-origin isolation; on a first visit a reload
-may be needed after the service worker has installed. Native MLX does not need
-browser AI isolation.
-
-Temperature and seed are zero, thinking is disabled, and prompt KV caching is
-enabled. Each command uses only current workbench state, with no prior chat
-turns, a 4,096-token context budget, at most 128 generated tokens per round,
-and at most three inference rounds, each with a 15-second inference deadline.
-Tool menus are stable within each turn. The generic `search_motif`
-tool verifies a reference, updates the form and runs the requested search in
-one action; no enzyme-specific prompt route is used. Simple completed actions
-need no second inference merely for confirmation.
-
-AI loading starts only on explicit enable/send, never by opening the guide.
-The guide unloads after 60 idle seconds, on hiding or closing the page, or via
-**Release AI from memory**. The companion also unloads after 60 idle seconds
-if a crashed tab fails to release it. Weights remain on disk for reuse;
-browser eviction controls do not delete native files. A Web Lock permits only
-one JMFS compute tab per origin and browser profile. It does not control other
-applications or profiles.
-The service worker adds isolation headers needed for multithreaded WASM on Pages.
-Build the pinned runtime assets with `npm ci --ignore-scripts && npm run build:ai`.
-Run the input, range and tool-guard checks with `npm run test:ai`.
-
-`No uploads` defaults on. It blocks external keyword, sequence and structural motif
-searches. Uploaded structures, motif selections, sequences and chat stay local;
-requested public enzyme names/organisms and IDs still go to reference services.
-Named references use reviewed UniProt active-site annotations, verified AlphaFold
-sequence/numbering and coordinates, and M-CSA evidence when available. A transferred
-M-CSA annotation is not relabeled as a reference for the query organism. Geometry
-from AlphaFold is a prediction, and a similar backbone does not establish catalysis.
-EnzyMM is a separate Python matcher, not a connected browser tool. RCSB MCP supports
-PROSITE pattern syntax; a PS accession alone is not a pattern.
-
-The RCSB MCP service runs locally. In the companion Cloudflare project use:
-
-```sh
-cd /Users/tung/Code/wrangler_jmfs/mcp-worker
-./run-local.sh
-```
-
-It serves `http://127.0.0.1:8772/mcp`, the default in `site.json`. The server is
-the official RCSB MCP 0.15.0 code; all upstream file hashes are recorded there.
-The browser may request permission to access a local network service. The server
-offers PDB metadata, searches, UniProt data and sequence-coordinate mappings, and
-uses UniProt REST for organism resolution. Query builders return a digest-checked
-document; the wrapper passes it unchanged to `rcsb_search_request`. External search
-tools require disabling No uploads. There is no hosted MCP or hosted inference cost.
+Uploaded structures, motif selections and sequences stay local. A prepared-search link that
+names an enzyme sends its name, organism or accession to the reference services, and a PDB
+ID is fetched from RCSB. Named references use reviewed UniProt active-site annotations,
+verified AlphaFold sequence/numbering and coordinates, and M-CSA evidence when available.
+A transferred M-CSA annotation is not relabeled as a reference for the query organism.
+Geometry from AlphaFold is a prediction, and a similar backbone does not establish catalysis.
 
 Remote index ranges are saved in versioned Cache Storage keyed by object ETag and
 byte interval. Reopening reuses downloaded ranges, with a HEAD request to check
 the object version; an uncached interval still needs a download. Locally added
 indexes are copied to OPFS and restored on reopening. No full remote index is
 eagerly downloaded. Clearing site data removes caches; storage quota or browser
-eviction can prevent retention. The guide requests persistent storage where supported.
+eviction can prevent retention.
 
 Custom inputs accept PDB or mmCIF uploads, or a legacy/extended PDB ID and author
 chain. The PDB-ID downloader uses mmCIF so it is ready for extended IDs without
@@ -415,5 +344,3 @@ user's browser and the assistant never sees the results.
 - **Links.** `colab.html` accepts `uniprot`, `enzyme` + `organism`, `pdb` (+ `chain`), `motif`,
   `chemistry_positions`, `chemistry`, `rmsd`, `limit` and `db`. A link fills the form and never
   starts a search. `llms.txt` documents the parameters for assistants.
-- **Scoring the local guide.** `tests/guide_eval/` holds 543 labelled commands and `score.mjs`,
-  which runs the real agent against a guide server on port 18773.

@@ -1,4 +1,4 @@
-// One tab owns the local model and search workers until that tab closes.
+// One tab owns the search workers until that tab closes.
 // Web Locks releases ownership automatically when the document is destroyed.
 let ownership;
 export function claimCompute(){

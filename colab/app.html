@@ -29,7 +29,7 @@ details{margin-top:12px}summary{cursor:pointer}details>*+*{margin-top:8px}detail
 .list label:hover{background:var(--dim)}.list label:has(:checked){background:var(--wash)}.list label:has(:disabled){cursor:default}
 .list .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.list .data{color:var(--muted)}.list a{font-size:12px}
 .status{min-height:18px;margin-top:8px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--error)}
-progress{display:block;width:100%;height:8px;margin:8px 0;accent-color:var(--primary);border:0;border-radius:6px;overflow:hidden}progress::-webkit-progress-bar{background:var(--wash)}progress::-webkit-progress-value{background:var(--primary)}progress::-moz-progress-bar{background:var(--primary)}.job-controls{display:flex;gap:8px;flex-wrap:wrap}.job-row{padding:8px 0;border-bottom:1px solid var(--hairline)}
+progress{display:block;width:100%;height:8px;margin:8px 0;accent-color:var(--primary);border:0;border-radius:6px;overflow:hidden}progress::-webkit-progress-bar{background:var(--wash)}progress::-webkit-progress-value{background:var(--primary)}progress::-moz-progress-bar{background:var(--primary)}.job-controls{display:flex;gap:8px;flex-wrap:wrap}.cache-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--hairline)}.cache-row span{overflow-wrap:anywhere;min-width:0}.cache-row button{flex-shrink:0}.job-row{padding:8px 0;border-bottom:1px solid var(--hairline)}
 .color-options{position:absolute;top:8px;left:8px;z-index:5;margin:0;border:1px solid var(--hairline);border-radius:6px;background:var(--surface);max-height:90%;overflow:auto}.color-options summary{padding:5px 8px;font-size:11px;list-style:none;color:var(--ink)}.color-options[open]{padding-bottom:8px}.color-options label{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:4px 8px}.color-options input[type=color]{width:30px;height:24px;padding:0;border:1px solid var(--hairline);border-radius:4px}.color-options button{margin:4px 8px;height:24px;font-size:11px}
 figure,figcaption{display:flex;flex-direction:column;gap:8px;min-width:0}.caption{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
 .viewer{position:relative;height:340px;overflow:hidden;border:1px solid var(--hairline);border-radius:8px;background:var(--surface)}#resultViewer{height:min(62vh,640px);min-height:420px}
@@ -235,7 +235,7 @@ async function loadQuery(i){
   $('fileName').textContent=query.label;preview();
   if(query.chain&&queryViewer){previewChains=new Set([query.chain]);chainControls($('queryChains'),[...new Set(queryViewer.getModel().selectedAtoms({}).map(a=>a.chain))].sort(),previewChains,highlight,'Chain ');highlight();}
   }catch(e){status(e.message,true);throw e;}
-  finally{if($('source').value===String(i)){loadingQuery=false;$('search').disabled=busy||Boolean(window.jmfsGuideBusy);}}
+  finally{if($('source').value===String(i)){loadingQuery=false;$('search').disabled=busy;}}
 }
 // The example stands in until a real database is chosen.
 function dropExample(){if(databases.some(db=>db.example&&db.checked)){for(const db of databases)if(db.example)db.checked=false;listDatabases();}}
@@ -379,8 +379,7 @@ function listHits(){
   }));
   if(named)annotate();
 }
-async function search(override,fromGuide=false){
-  if(window.jmfsGuideBusy&&!fromGuide)throw Error('Wait for the local guide, or stop it before starting a manual search.');
+async function search(override){
   if(busy||loadingQuery)throw Error('Wait for the current search or structure to finish.');busy=true;$('search').disabled=true;
   let result;
   try{
@@ -464,7 +463,7 @@ $('viewQuery').onclick=()=>view(false);$('viewHit').onclick=()=>view(true);
 for(const id of ['showQuery','showTarget','motifOnly','sideChains'])$(id).onchange=contextStyle;
 new ResizeObserver(resize).observe($('queryViewer'));new ResizeObserver(resize).observe($('resultViewer'));
 wide.addEventListener('change',arrange);arrange();
-// The optional local guide uses this same visible form and Search function.
+// Prepared-search links and the saved-job list drive this same visible form and Search function.
 function queryState(){const source=queries[Number($('source').value)]||{};return {source_label:source.label,pdb_id:source.pdb_id,reference_id:source.reference_id,motif:$('motif').value,chemistry:$('chemistry').value,chemistry_positions:$('chemistryPositions').value,rmsd:Number($('rmsd').value),limit:Number($('limit').value),cpu:$('cpu').value,database_ids:databases.flatMap((db,i)=>db.checked?[String(i)]:[])};}
 window.jmfsGuideApi={
   forgetIndex(name){for(const db of databases)if(db.file===name||db.blob?.name===name){delete db.blob;if(!db.url)db.checked=false;}listDatabases();},
@@ -558,7 +557,7 @@ window.jmfsGuideApi={
     if(draft.database_ids){databases.forEach((db,i)=>db.checked=draft.database_ids.includes(String(i)));$('index').value='';listDatabases();}
     gate();highlight();view(false);return queryState();
   },
-  run:()=>search(undefined,true),
+  run:()=>search(),
   async resumeJob(saved){
     await this.restoreJobQuery(saved);
     return search(await window[cfg.transport].resumePayload(saved));

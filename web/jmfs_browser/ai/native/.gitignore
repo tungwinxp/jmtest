@@ -1,5 +1,0 @@
-.venv
-.cache
-.tmp/
-__pycache__/
-server.lock

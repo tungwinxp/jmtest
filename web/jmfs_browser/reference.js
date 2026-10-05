@@ -1,4 +1,4 @@
-import {parsePdb} from '../query.js';
+import {parsePdb} from './query.js';
 
 const quote=value=>'"'+value.replaceAll('"','').replaceAll('\\','')+'"';
 const normalize=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -8,9 +8,8 @@ async function json(url,signal){
   return response.json();
 }
 // Named enzymes use source annotations, never an enzyme-to-residue preset table.
-export async function lookupReference({name,organism,pdb_id,accession},references,signal){
+export async function lookupReference({name,organism,accession},references,signal){
   signal=signal?AbortSignal.any([signal,AbortSignal.timeout(45000)]):AbortSignal.timeout(45000);
-  if(pdb_id)throw Error('Catalytic annotations are not supplied by the RCSB metadata tool. Provide an annotated UniProt enzyme name and organism, or verified PDB residue selections.');
   if(!accession&&(!name||!organism))throw Error('Supply an enzyme name and its reference organism. The target database is a separate choice.');
   // An accession names one reviewed entry exactly; a name and organism may match several.
   const query=accession?`accession:${quote(accession)} AND reviewed:true AND ft_act_site:*`:`protein_name:${quote(name)} AND organism_name:${quote(organism)} AND reviewed:true AND ft_act_site:*`;
@@ -50,5 +49,5 @@ export async function lookupReference({name,organism,pdb_id,accession},reference
       references.set(reference_id,{...result,text,chain,id:accession});candidates.push(result);
     }catch(error){if(signal?.aborted)throw error;failures.push({accession:entry.primaryAccession,error:error.message});}
   }
-  return {candidates,failures,note:candidates.length?'Choose the closest matching reference_id; set_jmfs_query supplies its verified selections. State the reference name you used.':'No verified reference found. Ask for an exact enzyme name, organism or verified PDB selection.'};
+  return {candidates,failures,note:candidates.length?undefined:'No reviewed enzyme with annotated catalytic residues matched. Check the name and organism, or give a PDB entry and residues.'};
 }

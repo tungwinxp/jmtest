@@ -4,7 +4,7 @@ import {rememberIndex,cachedDatabases,forgetDatabase} from './range_cache.js?v=2
 
 export async function mountJobs(api,transport){
   const section=document.createElement('section');section.className='group';
-  section.innerHTML=`<details style="margin:0"><summary>Downloads and jobs</summary><label class="pair"><input id="resumeJobs" type="checkbox"> Save progress and resume on return</label><p class="hint">Keeps interrupted downloads, query settings and search checkpoints locally. Searches pause when this page closes.</p><label class="pair"><input id="backgroundDownloads" type="checkbox"> Continue downloads after closing this page</label><p id="backgroundHint" class="hint"></p></details><div id="savedJobs" aria-live="polite"></div><details id="localStorageDetails"><summary>Local storage</summary><p class="hint">Remove a database or AI model to free space. Only its JMFS browser copies are removed; files saved to Downloads remain.</p><div id="cachedFiles"></div><button id="clearChat">Clear chat context</button></details>`;
+  section.innerHTML=`<details style="margin:0"><summary>Downloads and jobs</summary><label class="pair"><input id="resumeJobs" type="checkbox"> Save progress and resume on return</label><p class="hint">Keeps interrupted downloads, query settings and search checkpoints locally. Searches pause when this page closes.</p><label class="pair"><input id="backgroundDownloads" type="checkbox"> Continue downloads after closing this page</label><p id="backgroundHint" class="hint"></p></details><div id="savedJobs" aria-live="polite"></div><details id="localStorageDetails"><summary>Local storage</summary><p class="hint">Remove a database to free space. Only its JMFS browser copies are removed; files saved to Downloads remain.</p><div id="cachedFiles"></div></details>`;
   document.querySelector('.panel .run').before(section);
   const resume=section.querySelector('#resumeJobs'),background=section.querySelector('#backgroundDownloads'),list=section.querySelector('#savedJobs');
   resume.checked=resumable();background.checked=backgroundDownloads();
@@ -23,29 +23,25 @@ export async function mountJobs(api,transport){
   };
   async function refreshStorage(){
     const container=section.querySelector('#cachedFiles');container.replaceChildren();
-    const {cachedModels,forgetModel}=await import('./ai/model.js?v=31');
-    const [databases,models,downloads]=await Promise.all([cachedDatabases(),cachedModels(),downloadJobs()]);
+    const [databases,downloads]=await Promise.all([cachedDatabases(),downloadJobs()]);
     const items=new Map();
-    for(const copy of [...databases,...models,...downloads]){
-      const key=copy.kind==='model'?copy.url:'database:'+copy.name;
-      const item=items.get(key)||{url:copy.url,name:copy.name,kind:copy.kind,bytes:0,copies:[]};
-      item.bytes+=copy.loaded??copy.bytes;item.copies.push(copy);items.set(key,item);
+    for(const copy of [...databases,...downloads]){
+      const item=items.get(copy.name)||{name:copy.name,bytes:0,copies:[]};
+      item.bytes+=copy.loaded??copy.bytes;item.copies.push(copy);items.set(copy.name,item);
     }
     for(const item of items.values()){
       const row=document.createElement('div');row.className='cache-row';
-      const name=document.createElement('span');name.textContent=(item.kind==='model'?'AI · ':'Database · ')+item.name.replace(/^[a-f\d]{40}_/,'')+' · '+(item.bytes/1e6).toFixed(1)+' MB';
+      const name=document.createElement('span');name.textContent=item.name+' · '+(item.bytes/1e6).toFixed(1)+' MB';
       row.append(name,action('Remove',async()=>{
         if(api.state().busy)throw Error('Pause or stop the search before removing its data.');
-        if(item.kind==='model')await (window.jmfsGuide?window.jmfsGuide.forgetModel(item.url):forgetModel(item.url));
-        for(const job of await downloadJobs())if(item.kind==='model'?job.url===item.url:job.kind!=='model'&&job.name===item.name)await stopDownload(job.key);
-        if(item.kind!=='model'){for(const copy of item.copies)await forgetDatabase(copy);api.forgetIndex?.(item.name);}
+        for(const job of await downloadJobs())if(job.name===item.name)await stopDownload(job.key);
+        for(const copy of item.copies)await forgetDatabase(copy);api.forgetIndex?.(item.name);
         notice('Removed '+item.name+' from JMFS browser storage.');await refreshStorage();
       }));container.append(row);
     }
-    if(!items.size)container.textContent='No cached databases or AI models.';
+    if(!items.size)container.textContent='No cached databases.';
   }
   section.querySelector('#localStorageDetails').ontoggle=()=>{if(section.querySelector('#localStorageDetails').open)refreshStorage().catch(error=>notice(error.message));};
-  section.querySelector('#clearChat').onclick=()=>window.jmfsGuide?window.jmfsGuide.clearConversation().then(()=>notice('Command transcript cleared. Models and databases kept.')).catch(error=>notice(error.message)):notice('No guide context is loaded.');
   function row(title,progress,state){
     const item=document.createElement('div');item.className='job-row';
     const name=document.createElement('p');name.textContent=title;
@@ -61,8 +57,7 @@ export async function mountJobs(api,transport){
   async function startDownload(job){
     notice('Downloading '+job.name+'…');
     await runDownload(job,{background:backgroundDownloads()});
-    if(job.kind==='index')await finishIndex(job);
-    else notice('Model download is ready. Enable the Local AI Guide to use it.');
+    await finishIndex(job);
   }
   let refreshing=false,polling=true;
   const rates=new Map();
@@ -94,7 +89,7 @@ export async function mountJobs(api,transport){
         const controls=row(download.name,loaded/download.bytes,download.status+' · '+progressText(loaded,download.bytes,download.status==='complete'?0:eta)+(download.error?' · '+download.error:''));
         if(download.status==='running'||bg)controls.append(action('Pause',()=>pauseDownload(download.key)));
         else if(download.status!=='complete')controls.append(action('Resume',()=>startDownload(download)));
-        else controls.append(action(download.kind==='index'?'Save to Downloads':'Enable guide',async()=>download.kind==='index'?finishIndex(download):(await window.jmfsOpenGuide()).enable()));
+        else controls.append(action('Save to Downloads',()=>finishIndex(download)));
         controls.append(action('Stop',()=>stopDownload(download.key)));
       }
     }catch(error){notice('Saved job storage: '+error.message);}finally{refreshing=false;}
@@ -119,6 +114,17 @@ export async function mountJobs(api,transport){
   navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='jmfs-download')refresh();});
   // Job and download events refresh the list; the timer only tracks work in progress.
   const timer=setInterval(()=>{if(!document.hidden&&(polling||api.state().busy))refresh();},1000);window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+  // The on-device guide was removed. Free the model files it stored on earlier visits;
+  // index files, range caches and search checkpoints are untouched.
+  for(const job of await downloadJobs())if(job.kind==='model')await stopDownload(job.key);
+  if(!localStorage.getItem('jmfs-guide-retired'))(async()=>{
+    const models=['MiniCPM5-1B-Agentic-Tooluse-v3.Q4_K_M.gguf','gemma-4-E2B-it-XS-TS-Q3_K_S.gguf','Qwen3.5-0.8B-S-TS-Q4_K_S.gguf'];
+    const cache=await(await navigator.storage.getDirectory()).getDirectoryHandle('cache').catch(()=>null),names=[];
+    if(cache)for await(const name of cache.keys())names.push(name);
+    for(const name of names)if(models.some(model=>name.endsWith(model)))await cache.removeEntry(name).catch(()=>{});
+    for(const key of ['jmfs-guide-private','jmfs-guide-model'])localStorage.removeItem(key);
+    localStorage.setItem('jmfs-guide-retired','1');
+  })().catch(()=>{});
   await refresh();
   const saved=await transport.savedJob();
   if(saved?.status==='running'&&resume.checked)api.resumeJob(saved).catch(error=>notice(error.message));
