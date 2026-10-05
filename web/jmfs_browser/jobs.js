@@ -25,16 +25,20 @@ export async function mountJobs(api,transport){
   async function refreshStorage(){
     const container=section.querySelector('#cachedFiles');container.replaceChildren();
     const [databases,models,downloads]=await Promise.all([cachedDatabases(),cachedModels(),downloadJobs()]);
-    const items=new Map([...databases,...models].map(item=>[item.url||'file:'+item.name,item]));
-    for(const job of downloads){const item=items.get(job.url)||{url:job.url,name:job.name,bytes:0,kind:job.kind};item.bytes+=job.loaded;items.set(job.url,item);}
+    const items=new Map();
+    for(const copy of [...databases,...models,...downloads]){
+      const key=copy.kind==='model'?copy.url:'database:'+copy.name;
+      const item=items.get(key)||{url:copy.url,name:copy.name,kind:copy.kind,bytes:0,copies:[]};
+      item.bytes+=copy.loaded??copy.bytes;item.copies.push(copy);items.set(key,item);
+    }
     for(const item of items.values()){
       const row=document.createElement('div');row.className='cache-row';
       const name=document.createElement('span');name.textContent=(item.kind==='model'?'AI · ':'Database · ')+item.name.replace(/^[a-f\d]{40}_/,'')+' · '+(item.bytes/1e6).toFixed(1)+' MB';
       row.append(name,action('Remove',async()=>{
         if(api.state().busy)throw Error('Pause or stop the search before removing its data.');
         if(item.kind==='model')await window.jmfsGuide.forgetModel(item.url);
-        for(const job of await downloadJobs())if((item.url&&job.url===item.url)||(item.file&&job.name===item.name))await stopDownload(job.key);
-        if(item.kind!=='model'){await forgetDatabase(item);api.forgetIndex?.(item.name);}
+        for(const job of await downloadJobs())if(item.kind==='model'?job.url===item.url:job.kind!=='model'&&job.name===item.name)await stopDownload(job.key);
+        if(item.kind!=='model'){for(const copy of item.copies)await forgetDatabase(copy);api.forgetIndex?.(item.name);}
         notice('Removed '+item.name+' from JMFS browser storage.');await refreshStorage();
       }));container.append(row);
     }
