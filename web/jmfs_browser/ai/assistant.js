@@ -45,7 +45,7 @@ export async function mountGuide(api,config={},enabled=false){
   $('guideLoad').onclick=()=>enable().catch(()=>{});
   $('guideRelease').onclick=()=>release().catch(error=>status(error.message));
   $('guideToggle').onclick=()=>{const open=$('guideBody').hidden;$('guideBody').hidden=!open;$('guideToggle').textContent=open?'Close guide':'Open guide';$('guideToggle').setAttribute('aria-expanded',String(open));if(open)$('guideInput').focus();};
-  addEventListener('visibilitychange',()=>{if(document.hidden){abort?.abort();release().catch(()=>{});}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){abort?.abort();release().catch(()=>{});}});
   addEventListener('pagehide',()=>{abort?.abort();release().catch(()=>{});});
   $('guideStop').onclick=()=>{abort?.abort();loadAbort?.abort();};
   $('guideForm').onsubmit=async event=>{

@@ -118,3 +118,31 @@ test('Commands carry current state without previous chat turns and bound generat
   await agent.turn('Explain the query',llm);await agent.turn('Explain reduced chemistry',llm);
   assert.equal(calls,2);
 });
+
+test('Native companion cancellation and page closure release the fixed model',async()=>{
+  const {localMlx}=await import('../ai/native.js');
+  const previous={fetch:globalThis.fetch,add:globalThis.addEventListener,remove:globalThis.removeEventListener};
+  const events=new EventTarget(),requests=[];
+  globalThis.addEventListener=events.addEventListener.bind(events);
+  globalThis.removeEventListener=events.removeEventListener.bind(events);
+  globalThis.fetch=async(url,options={})=>{
+    const path=new URL(url).pathname,body=options.body?JSON.parse(options.body):undefined;requests.push({path,body});
+    if(path==='/health')return Response.json({backend:'mlx',model:'TheStageAI/gemma-4-E2B-it'});
+    if(path==='/v1/chat/completions')return new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Stopped','AbortError')),{once:true}));
+    return Response.json({});
+  };
+  try{
+    const native=await localMlx(()=>{}),abort=new AbortController();
+    const inference=native.createChatCompletion({messages:[],abortSignal:abort.signal});
+    abort.abort();await assert.rejects(inference,{name:'AbortError'});
+    const generated=requests.find(r=>r.path==='/v1/chat/completions');
+    assert.equal(requests.find(r=>r.path==='/cancel').body.request_id,generated.body.request_id);
+    events.dispatchEvent(new Event('pagehide'));
+    assert(requests.some(r=>r.path==='/release'));
+    await native.exit();
+  }finally{
+    globalThis.fetch=previous.fetch;
+    previous.add?globalThis.addEventListener=previous.add:delete globalThis.addEventListener;
+    previous.remove?globalThis.removeEventListener=previous.remove:delete globalThis.removeEventListener;
+  }
+});
