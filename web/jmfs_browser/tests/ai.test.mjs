@@ -5,13 +5,14 @@ import {createAgent} from '../ai/agent.js';
 import {pdbId,cifAtoms} from '../structure.js';
 import {parsePdb} from '../query.js';
 import {HttpRangeSource} from '../jmfs_index.js';
-import {supportedGuideGpu} from '../ai/model.js';
+import {supportedGuideGpu,firstToolCall} from '../ai/model.js';
 
-test('Compressed Gemma GPU selection accepts Apple Metal and NVIDIA, rejects fallback adapters',()=>{
+test('Lightweight guide GPU selection accepts Apple Metal and NVIDIA, rejects fallback adapters',()=>{
   assert(supportedGuideGpu({vendor:'apple',architecture:'metal-3',isFallbackAdapter:false},8));
   assert(supportedGuideGpu({vendor:'nvidia',architecture:'ada',isFallbackAdapter:false},8));
   assert(!supportedGuideGpu({vendor:'nvidia',isFallbackAdapter:true},8));
-  assert(!supportedGuideGpu({vendor:'nvidia'},4));
+  assert(supportedGuideGpu({vendor:'nvidia'},4));
+  assert(!supportedGuideGpu({vendor:'nvidia'},2));
   assert(!supportedGuideGpu(undefined,8));
 });
 
@@ -127,7 +128,7 @@ test('Native companion cancellation and page closure release the fixed model',as
   globalThis.removeEventListener=events.removeEventListener.bind(events);
   globalThis.fetch=async(url,options={})=>{
     const path=new URL(url).pathname,body=options.body?JSON.parse(options.body):undefined;requests.push({path,body});
-    if(path==='/health')return Response.json({backend:'mlx',model:'TheStageAI/gemma-4-E2B-it'});
+    if(path==='/health')return Response.json({backend:'mlx',model:'mlx-community/MiniCPM5-1B-4bit'});
     if(path==='/v1/chat/completions')return new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Stopped','AbortError')),{once:true}));
     return Response.json({});
   };
@@ -145,4 +146,18 @@ test('Native companion cancellation and page closure release the fixed model',as
     previous.add?globalThis.addEventListener=previous.add:delete globalThis.addEventListener;
     previous.remove?globalThis.removeEventListener=previous.remove:delete globalThis.removeEventListener;
   }
+});
+
+test('WebGPU streaming stops at one complete tool call before repeated output',async()=>{
+  let cancelled=false;
+  const llm=firstToolCall({createChatCompletion:async params=>{
+    params.onData({choices:[{delta:{tool_calls:[{index:0,id:'view',function:{name:'protein_view',arguments:'{"action":'}}]}}]});
+    assert(!params.abortSignal.aborted);
+    params.onData({choices:[{delta:{tool_calls:[{index:0,function:{arguments:'"motif"}'}}]}}]});
+    cancelled=params.abortSignal.aborted;if(cancelled)throw new DOMException('Stopped','AbortError');
+    throw Error('Repeated output must not run');
+  }});
+  const response=await llm.createChatCompletion({tools:[{function:{name:'protein_view',parameters:{required:['action']}}}]});
+  assert(cancelled);assert.equal(response.choices[0].message.tool_calls.length,1);
+  assert.deepEqual(JSON.parse(response.choices[0].message.tool_calls[0].function.arguments),{action:'motif'});
 });

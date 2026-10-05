@@ -72,4 +72,10 @@ assert(!styles.some(predicate=>predicate(atoms[1])));
 assert(styles.some(predicate=>predicate(atoms[3])));
 viewer.jmfsFocus();assert.deepEqual(zoomed,[atoms[3],atoms[5]]);
 viewer.jmfsVisibility(['query_A','target_A'],false,true,false,false);assert.equal(sticks.length,0);
+// Motif tubes interpolate real CA positions instead of beta-sheet midpoints.
+atoms.push({chain:'query_A',resi:113,resn:'PRO',atom:'O',x:0,y:1,z:0});
+installJMFSScene(viewer,[{chain:'query_A',start:112,end:114,ss:'s'}],{},[{chain:'A',start:113,end:113}]);
+assert.equal(atoms[1].ss,'c');assert.equal(atoms[0].ss,'s');assert.equal(atoms[2].ss,'s');
+assert.equal(colors.findLast(s=>s.predicate(atoms[1])).style.cartoon.style,'oval');
+assert(sticks.some(s=>s.predicate(atoms[1])),'The CA–CB bond retains its real attachment point.');
 console.log('Scene hover, hover placement, visibility restore, motif-only and focus checks passed.');

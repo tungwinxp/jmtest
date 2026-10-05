@@ -4,6 +4,7 @@ No tool execution, file access API, cloud inference, or arbitrary model loading.
 Model artifacts and dependencies are pinned and cached inside this project.
 """
 import fcntl
+import ast
 import gc
 import json
 import os
@@ -12,12 +13,13 @@ import re
 import resource
 import threading
 import time
+import xml.etree.ElementTree as ET
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = Path(__file__).resolve().parent
 os.environ.setdefault('HF_HOME', str(ROOT / '.cache/huggingface'))
-MODEL_ID = 'TheStageAI/gemma-4-E2B-it'
-REVISION = 'da722787240d2e78864709425fef40da3790e2a0'
+MODEL_ID = 'mlx-community/MiniCPM5-1B-4bit'
+REVISION = '36447e84d28c57588a6e91907675e44afe54ab00'
 ORIGINS = {'https://tungwinxp.github.io', 'http://127.0.0.1:8771', 'http://localhost:8771'}
 work = threading.Lock()
 cancel = threading.Event()
@@ -31,12 +33,10 @@ def ensure_model():
     global model, tokenizer
     if model is None:
         from huggingface_hub import snapshot_download
-        from edge_lm.models.load import load, set_prefill_logits_to_keep
+        from mlx_lm import load
         directory = snapshot_download(MODEL_ID, revision=REVISION, allow_patterns=[
-            'config.json', 'model_m.safetensors', 'ple_m.safetensors',
-            'tokenizer.json', 'tokenizer_config.json'])
-        model, tokenizer = load(directory, size='m')
-        set_prefill_logits_to_keep(model, 1)
+            '*.json', 'chat_template.jinja', 'model.safetensors'])
+        model, tokenizer = load(directory)
 
 
 def unload():
@@ -59,11 +59,33 @@ def release_idle():
                 work.release()
 
 
+def tool_call(text, tools):
+    block = re.search(r'<function\b[^>]*>.*?</function>', text, re.S)
+    if not block: return None
+    node = ET.fromstring(block.group())
+    name = node.attrib.get('name')
+    definition = next((t['function'] for t in tools if t['function']['name'] == name), None)
+    if definition is None: raise ValueError('The model selected an unavailable tool.')
+    properties = definition.get('parameters', {}).get('properties', {})
+    args = {}
+    for param in node:
+        key = param.attrib.get('name')
+        if param.tag != 'param' or key not in properties or key in args:
+            raise ValueError('Invalid tool parameter.')
+        value = param.text or ''
+        if properties[key].get('type') != 'string':
+            try: value = json.loads(value)
+            except ValueError: value = ast.literal_eval(value)
+        args[key] = value
+    return {'name': name, 'arguments': json.dumps(args)}
+
+
 def completion(body):
     global cache, cached_ids
     import mlx.core as mx
-    from mlx_vlm import stream_generate
-    from mlx_vlm.tools.parsers.gemma4 import parse_tool_call
+    from mlx_lm import stream_generate
+    from mlx_lm.models.cache import make_prompt_cache
+    from mlx_lm.sample_utils import make_sampler
     ensure_model()
     messages = body.get('messages')
     if not isinstance(messages, list) or not 1 <= len(messages) <= 24:
@@ -83,37 +105,36 @@ def completion(body):
     tools = body.get('tools') or []
     prompt = tokenizer.apply_chat_template(messages, tools=tools, tokenize=False,
                                           add_generation_prompt=True, enable_thinking=False)
-    ids = tokenizer.encode(prompt)
+    ids = tokenizer.encode(prompt, add_special_tokens=False)
     if len(ids) + 128 > 4096:
         raise ValueError('This command exceeds the 4096-token guide budget. Split it into smaller commands.')
     reused = len(cached_ids) if cache is not None and ids[:len(cached_ids)] == cached_ids else 0
     if not reused:
-        cache = model.language_model.make_cache()
+        cache = make_prompt_cache(model)
     new_ids = ids[reused:]
     if not new_ids:
-        cache = model.language_model.make_cache(); new_ids = ids; reused = 0
+        cache = make_prompt_cache(model); new_ids = ids; reused = 0
     mx.random.seed(0)
     parts, tokens, last = [], [], None
     started = time.perf_counter()
-    for result in stream_generate(model, tokenizer, '',
-            input_ids=mx.array([new_ids], dtype=mx.int32), prompt_cache=cache,
-            temperature=0, max_tokens=max(1, min(128, int(body.get('max_tokens', 128)))),
+    for result in stream_generate(model, tokenizer, prompt=new_ids, prompt_cache=cache,
+            sampler=make_sampler(temp=0), max_tokens=max(1, min(128, int(body.get('max_tokens', 128)))),
             prefill_step_size=256):
         if cancel.is_set():
             cache = None; cached_ids = []
             raise InterruptedError('Generation stopped.')
         parts.append(result.text); tokens.append(result.token); last = result
-    cached_ids = ids + tokens[:-1]
+        if '</function>' in ''.join(parts): break
+    # MLX can prefetch the next token before yielding. Use the actual cache
+    # length, including when generation stops at the first completed function.
+    cached_ids = (ids + tokens)[:cache[0].offset]
     text = ''.join(parts)
-    calls = []
-    for index, span in enumerate(re.findall(r'<\|tool_call>(.*?)<tool_call\|>', text, re.S)):
-        function = parse_tool_call(span, tools)
-        if function['name'] not in {t['function']['name'] for t in tools}:
-            raise ValueError('The model selected an unavailable tool.')
-        calls.append({'id': f'{active_id}-{index}', 'type': 'function', 'function': function})
-    if '<|tool_call>' in text and not calls:
+    function = tool_call(text, tools)
+    calls = [{'id': f'{active_id}-0', 'type': 'function', 'function': function}] if function else []
+    if '<function' in text and not calls:
         raise ValueError('The model returned an incomplete tool call. Retry the message.')
-    content = re.sub(r'<\|tool_call>.*?<tool_call\|>', '', text, flags=re.S)
+    content = re.sub(r'<function\b[^>]*>.*?</function>', '', text, flags=re.S)
+    content = re.sub(r'<think>.*?</think>', '', content, flags=re.S)
     content = re.sub(r'<\|[^<>]+\|?>', '', content).strip()
     elapsed = time.perf_counter() - started
     return {'choices': [{'index': 0, 'finish_reason': 'tool_calls' if calls else 'stop',
@@ -156,7 +177,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.permitted(): return self.reply(403, {'error': 'Origin or host rejected.'})
         if self.path != '/health': return self.reply(404)
-        self.reply(200, {'backend': 'mlx', 'model': MODEL_ID, 'size': 'm', 'model_gb': 1.44,
+        self.reply(200, {'backend': 'mlx', 'model': MODEL_ID, 'quantization': '4bit', 'model_gb': 0.618,
                          'loaded': model is not None, 'busy': work.locked()})
 
     def do_POST(self):

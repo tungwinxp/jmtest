@@ -58,7 +58,8 @@ const sourceIdentity = ({ kind, file, url }) => (kind === "file"
   ? `file\0${file.name}\0${file.size}\0${file.lastModified}` : `url\0${url}`);
 
 export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cpuLaneCount }) {
-  const wasmModule = fetch(wasmUrl).then((response) => {
+  let wasmModule;
+  const loadWasm = () => wasmModule ||= fetch(wasmUrl).then((response) => {
     if (!response.ok) throw new Error(`JMFS WASM fetch failed (${response.status})`);
     return response.arrayBuffer();
   }).then((bytes) => WebAssembly.compile(bytes));
@@ -70,7 +71,8 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
   const cpuLaneLimit = cpuLaneCount >= 1 ? Math.trunc(cpuLaneCount)
     : Math.max(1, Math.min((navigator.hardwareConcurrency || 2) - 1, navigator.deviceMemory >= 8 ? 8 : 4));
   // `navigator.gpu` can exist without a usable adapter, for example with the GPU disabled.
-  const adapterReady = navigator.gpu
+  let adapter;
+  const adapterReady = () => adapter ||= navigator.gpu
     ? navigator.gpu.requestAdapter().then(Boolean, () => false)
     : Promise.resolve(false);
   let calls = 0;
@@ -211,7 +213,7 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
     }else job=null;
     // The form's CPU choice, or a browser without WebGPU, scans on the CPU however large the
     // database is; the status line shows progress.
-    const onCpu = Boolean(payload.cpu) || !(await adapterReady);
+    const onCpu = Boolean(payload.cpu) || !(await adapterReady());
     const base = {
       pdbText,
       motif,
@@ -225,7 +227,7 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
       keepCheckpoint: Boolean(payload.checkpoint),
       cpuCores,
       resident: !onCpu,
-      wasmModule: await wasmModule,
+      wasmModule: await loadWasm(),
     };
     const started = performance.now();
     let lastSaved=0;
@@ -340,7 +342,7 @@ export function createTransport({ workerUrl, wasmUrl, demoIndexUrl, cpuLanes: cp
     })};
   };
   transport.restore=async saved=>{
-    const payload=await transport.resumePayload(saved),module=await wasmModule;
+    const payload=await transport.resumePayload(saved),module=await loadWasm();
     last={rows:saved.scene.rows,searches:saved.scene.requests.map(request=>({
       request:{...request,wasmModule:module,index:request.index.kind==='file'?{kind:'file',file:payload.index_files.find(file=>file.name===request.index.name)}:request.index},
       result:{lane:new Lane(workerUrl)},

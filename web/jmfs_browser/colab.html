@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>JMFS structure search</title>
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js" as="script" crossorigin="anonymous">
   <style>
     body{margin:0;background:#fff;color:#202124;font:13px/1.45 system-ui,sans-serif}
     #intro{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -20,7 +21,7 @@
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=30";
+    import { createTransport } from "./colab_transport.js?v=31";
     import {fetchStructure} from './structure.js';
     import {savedIndexes,rememberIndex} from './range_cache.js?v=28';
 
@@ -62,21 +63,22 @@
         return { name, file, get, bytes: Number(bytes), url, downloadUrl };
       });
     };
+    // Fetch the small form resources while the introduction is visible.
+    const resources=Promise.all([text('../../colab/app.html?v=31'),text('../../colab/scene.js?v=31'),listed()]);
+    resources.catch(()=>{});
+    // Isolation is needed by browser AI, never a prerequisite for opening the form.
+    const isolationReady='serviceWorker' in navigator
+      ? navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready).catch(()=>null)
+      : Promise.resolve(null);
     async function start(enableGuide=false){
-    document.getElementById('boot').textContent='Loading the JMFS interface…';
+    document.getElementById('boot').textContent='Opening the workbench…';
     document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
-    if('serviceWorker' in navigator){
-      try{
-        await navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'});await navigator.serviceWorker.ready;
-        if(!crossOriginIsolated&&!resume){sessionStorage.setItem('jmfs-isolation-reload',enableGuide?'guide':'workbench');location.reload();return;}
-      }catch(error){console.warn('Guide isolation unavailable',error);}
+    if(enableGuide&&!crossOriginIsolated&&!resume){
+      await Promise.race([isolationReady,new Promise(resolve=>setTimeout(resolve,1000))]);
+      if(navigator.serviceWorker?.controller){sessionStorage.setItem('jmfs-isolation-reload','guide');location.reload();return;}
     }
     try {
-      const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=30"),
-        text("../../colab/scene.js?v=30"),
-        listed(),
-      ]);
+      const [template, sceneJs, catalog] = await resources;
       const demoIndexUrl = here("./assets/demo.jmfsgeom?v=29");
       window.jmfsTransport = createTransport({
         workerUrl: new URL("./search_worker.js?v=30", import.meta.url),
@@ -97,9 +99,7 @@
           ...catalog,
         ],
         indexFile: true,
-        subtitle: await navigator.gpu?.requestAdapter().catch(() => null)
-          ? "Runs in this browser, on this computer's GPU"
-          : "Runs in this browser, on this computer's CPU (no WebGPU)",
+        subtitle: "Runs locally on this computer · GPU or CPU",
         indexLabel: "Address of a .jmfsgeom file served with byte ranges",
         indexPlaceholder: "https://…/database.jmfsgeom",
         indexHint: catalog.some((database) => !database.url)
@@ -142,11 +142,27 @@
         finally{button.disabled=false;}
       };
       const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=29');document.head.append(style);
-      const {mountJobs}=await import('./jobs.js?v=29');
+      const {mountJobs}=await import('./jobs.js?v=31');
+      const optional=document.createElement('section');optional.className='group guide';
+      optional.innerHTML='<div class="bar"><h2>Local AI Guide</h2><button>Open guide</button></div>';
+      document.querySelector('.panel header').after(optional);
+      let guideReady;
+      const openGuide=async(enabled=false)=>{
+        if(guideReady)return guideReady;
+        const button=optional.querySelector('button');button.disabled=true;
+        guideReady=(async()=>{try{
+          const {mountGuide}=await import('./ai/assistant.js?v=31');
+          const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}));
+          window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enabled);optional.remove();
+          if(!enabled)document.getElementById('guideToggle').click();
+          return window.jmfsGuide;
+        }catch(error){guideReady=null;button.disabled=false;document.getElementById('status').textContent='Optional AI guide unavailable: '+error.message;throw error;}})();
+        return guideReady;
+      };
+      window.jmfsOpenGuide=openGuide;
+      optional.querySelector('button').onclick=()=>openGuide().catch(()=>{});
+      if(enableGuide)openGuide(true).catch(()=>{});
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
-      const {mountGuide}=await import('./ai/assistant.js?v=30');
-      const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
-      window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {
       const status=document.getElementById('boot')||document.getElementById('status');status.textContent=`The JMFS interface could not start: ${error.message}`;
     }

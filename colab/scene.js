@@ -53,6 +53,9 @@ function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[], segmen
       smoothMatches.add(a);smoothResidues.set(key,a);
     }
   }
+  // Beta-sheet cartoon averaging moves the tube away from the real CA atoms.
+  // Motif tubes must interpolate those anchors so CA–CB sticks stay attached.
+  for(const a of atoms)if(smoothResidues.has(residueKey(a))){a.ss='c';a.ssbegin=false;a.ssend=false;}
   for(const [index,a] of queryMatches.entries()){
     const origin=a.jmfsOrigin;
     if(!origin||!chemistry.some(r=>origin.chain==='query_'+r.chain&&origin.resi>=r.start&&origin.resi<=r.end))continue;

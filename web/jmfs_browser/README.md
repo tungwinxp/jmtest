@@ -65,26 +65,44 @@ action. Scientific acceptance remains in the shared Rust core. An example link o
 fills the composer. There is no enzyme-specific prompt route or residue preset in
 the guide.
 
-Gemma 4 E2B is the guide model. On Apple Silicon, start the optional native
-MLX companion from this checkout before enabling the guide:
+MiniCPM5 1B at 4-bit is the guide model. On Apple Silicon, start the optional
+native MLX companion from this checkout before enabling the guide:
 
 ```sh
 sh web/jmfs_browser/ai/native/start.sh
 ```
 
 It binds only `127.0.0.1:18773`, accepts the deployed site and local test origins,
-and downloads the pinned TheStageAI M-tier weights (about 1.44 GB) into
-`ai/native/.cache`. The pinned MLX/Edge-LM runtime and dependencies live in
+and downloads `mlx-community/MiniCPM5-1B-4bit`, revision
+`36447e84d28c57588a6e91907675e44afe54ab00` (608 MB weights, about 618 MB including
+tokenizer), into `ai/native/.cache`. MLX 0.32.3 and mlx-lm 0.32.0 live in
 `ai/native/.venv`. Ctrl-C stops the companion. It offers fixed-model inference
 only; browser tools perform all validated actions. A process lock and request
 lock prevent duplicate native servers and simultaneous native inference.
 
 Without the companion, compatible Apple Metal or NVIDIA WebGPU adapters use
-the pinned Gemma XS GGUF (1,733,114,080 bytes) through Wllama 3.8.1. NVIDIA
-selection is tested with adapter descriptors; execution was measured on Apple
-Metal only. Unsupported browsers require the companion rather than silently
-starting a CPU AI. Qwen is removed; the next visit deletes only its identified
-browser model cache and download job. Database files are preserved.
+`ewin-reg/MiniCPM5-1B-Agentic-Tooluse-v3-GGUF`, revision
+`b8ed16e7a7423b409e321fc9ba30f2004ceacb67`, Q4_K_M (688,065,856 bytes), through
+Wllama 3.8.1. The native base model and browser tool-use fine-tune are different
+checkpoints. The browser selector requires a non-fallback adapter and at least
+4 GiB reported device memory. Unsupported browsers require the companion.
+The publisher reports repeated output from the tool-use fine-tune, so streaming
+stops at the first complete tool call; schemas still validate every action.
+Native XML function calls are parsed with the standard library, restricted to
+declared tools and parameters, then validated by the browser.
+
+MiniCPM inference throughput and command accuracy have not yet been measured on
+this Mac. Existing Gemma, Qwen and Liquid diagnostic records are historical;
+they do not establish MiniCPM performance or reduced heat. Qwen is removed;
+opening the guide deletes only its identified browser cache and download job.
+Other model copies can be removed individually from Local storage.
+
+The workbench opens independently of AI and service-worker readiness. Opening
+it does not compile search WASM, probe a GPU adapter or load an AI runtime.
+Search initializes its executor on demand; the guide module opens only when
+requested. Browser AI requires cross-origin isolation; on a first visit a reload
+may be needed after the service worker has installed. Native MLX does not need
+browser AI isolation.
 
 Temperature and seed are zero, thinking is disabled, and prompt KV caching is
 enabled. Each command uses only current workbench state, with no prior chat
@@ -196,6 +214,11 @@ python3 web/jmfs_browser/serve.py            # serves the repository root
   rebuilt from their C4′ atoms by the Arena port. Target context is the
   indexed anchor trace on chain `A`, numbered from one; an index with stored
   residue labels is not read for them yet.
+Motif tubes interpolate the actual source alpha carbons without beta-sheet
+midpoint averaging, keeping chemistry CA–CB sticks attached. The target context
+retains its gray secondary-structure ribbons. Source atomic coordinates are
+unchanged; chemistry sticks remain limited to selected chemistry residues.
+
 - **Downloads** are a TSV of `query_id`, `target_id`, zero-based `seg_beg`,
   `seg_len`, `rmsd` and the matched sequence, and the scene mmCIF. Pose columns
   and Parquet remain native features.

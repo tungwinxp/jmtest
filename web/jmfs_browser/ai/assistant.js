@@ -1,5 +1,5 @@
 import {createAgent} from './agent.js?v=30';
-import {loadLocalModel,guideGpuAvailable,GEMMA_URL,forgetModel,removeRetiredModel} from './model.js?v=30';
+import {loadLocalModel,guideGpuAvailable,MODEL_URL,forgetModel,removeRetiredModel} from './model.js?v=31';
 export async function mountGuide(api,config={},enabled=false){
   const panel=document.querySelector('.panel');
   const box=document.createElement('section');box.className='group guide';
@@ -8,7 +8,7 @@ export async function mountGuide(api,config={},enabled=false){
   <div id="guideMessages" role="log" aria-live="polite" aria-label="Guide conversation"></div>
   <form id="guideForm"><label for="guideInput">Give the local guide a command</label><textarea id="guideInput" maxlength="1200" rows="3" placeholder="Find a motif, check hits, or change the protein view…"></textarea><p class="hint">Each command uses the current workbench state. Previous messages aren’t sent to the model.</p><p class="hint" style="margin-bottom:8px">Examples — click to insert: <a id="guideExample" href="#guideInput">Search a catalytic motif</a> · <a class="guidePrompt" href="#guideInput" data-prompt="Show me just the motif.">Show just the motif</a> · <a class="guidePrompt" href="#guideInput" data-prompt="Do any of these hits bind to sugars? Check the annotations and cite the evidence.">Check sugar binding</a></p>
   <div class="bar"><button id="guideSend" type="submit">Send</button><button id="guideStop" type="button" hidden>Stop</button><button id="guideLoad" type="button">Enable local AI</button></div></form>
-  <progress id="guideProgress" max="1" hidden aria-label="Local AI download progress"></progress><p id="guideStatus" class="status" role="status"></p><details><summary>Guide settings</summary><button id="guideRelease">Release AI from memory</button><p class="hint">The guide unloads after one idle minute, when hidden, or when this page closes. Cached files stay available. Apple Silicon uses the native MLX companion (1.44 GB); otherwise supported GPUs use browser WebGPU (1.73 GB). Qwen has been removed.</p><details><summary>Start the MLX companion on this Mac</summary><p class="hint">From a checkout of JumpMASTER, run <code>sh web/jmfs_browser/ai/native/start.sh</code>, then enable the guide. Stop the companion with Ctrl-C. Its downloaded files are in that checkout’s <code>ai/native/.cache</code>; browser cache controls remove browser files only.</p></details><label for="guideMcp">RCSB MCP address</label><input id="guideMcp" type="text" placeholder="https://…/mcp" spellcheck="false"><button id="guideConnect">Use address</button><p class="hint">Query setup uses verified source annotations. PDB discovery requires a connected RCSB MCP server.</p></details></div>`;
+  <progress id="guideProgress" max="1" hidden aria-label="Local AI download progress"></progress><p id="guideStatus" class="status" role="status"></p><details><summary>Guide settings</summary><button id="guideRelease">Release AI from memory</button><p class="hint">The guide unloads after one idle minute, when hidden, or when this page closes. Cached files stay available. Apple Silicon uses MiniCPM5 1B MLX at 4-bit (618 MB including tokenizer); supported browser GPUs use MiniCPM5 Agentic v3 Q4 (688 MB). These are different checkpoints. Qwen has been removed.</p><details><summary>Start the MLX companion on this Mac</summary><p class="hint">From a checkout of JumpMASTER, run <code>sh web/jmfs_browser/ai/native/start.sh</code>, then enable the guide. Stop the companion with Ctrl-C. Its downloaded files are in that checkout’s <code>ai/native/.cache</code>; browser cache controls remove browser files only.</p></details><label for="guideMcp">RCSB MCP address</label><input id="guideMcp" type="text" placeholder="https://…/mcp" spellcheck="false"><button id="guideConnect">Use address</button><p class="hint">Query setup uses verified source annotations. PDB discovery requires a connected RCSB MCP server.</p></details></div>`;
   panel.querySelector('header').after(box);
   const $=id=>document.getElementById(id),status=(text,data)=>{
     $('guideStatus').textContent=text;
@@ -16,9 +16,8 @@ export async function mountGuide(api,config={},enabled=false){
     else $('guideProgress').hidden=true;
   };
   const privateMode=()=>document.getElementById('guidePrivate').checked;
-  const gpu=await guideGpuAvailable();
   removeRetiredModel().catch(()=>{});
-  let llm,loading,abort,loadAbort,idleTimer,turnBusy=false,agent=createAgent(api,{...config,privateMode});
+  let gpu,llm,loading,abort,loadAbort,idleTimer,turnBusy=false,agent=createAgent(api,{...config,privateMode});
   $('guidePrivate').checked=localStorage.getItem('jmfs-guide-private')!=='off';
   $('guidePrivate').onchange=()=>localStorage.setItem('jmfs-guide-private',$('guidePrivate').checked?'on':'off');
   const say=(role,text)=>{const p=document.createElement('p');p.className=role;p.textContent=text;$('guideMessages').append(p);$('guideMessages').scrollTop=$('guideMessages').scrollHeight;return p;};
@@ -38,8 +37,10 @@ export async function mountGuide(api,config={},enabled=false){
     if(api.state().busy)throw Error('Wait for the JMFS search before loading the guide.');
     if(llm)return llm;if(loading)return loading;
     loadAbort=new AbortController();busy(true);
+    gpu??=await guideGpuAvailable();
+    removeRetiredModel().catch(()=>{});
     navigator.storage?.persist?.().catch(()=>{});
-    loading=loadLocalModel(status,loadAbort.signal,GEMMA_URL,{n_gpu_layers:gpu?99:0,n_batch:512,n_ubatch:256,requireGpu:!gpu}).then(model=>{llm=model;$('guideLoad').hidden=true;status(model.backend==='mlx'?'Local AI ready · native MLX · Gemma E2B · 1.44 GB.':'Local AI ready · WebGPU · Gemma E2B · 1.73 GB.');idle();return model;}).catch(error=>{status(error.name==='AbortError'?'Loading stopped.':`Local AI could not load: ${error.message}. You can still use the query form.`);throw error;}).finally(()=>{loading=null;if(!turnBusy)busy(false);});
+    loading=loadLocalModel(status,loadAbort.signal,MODEL_URL,{n_gpu_layers:gpu?99:0,n_batch:512,n_ubatch:256,requireGpu:!gpu}).then(model=>{llm=model;$('guideLoad').hidden=true;status(model.backend==='mlx'?'Local AI ready · native MLX · MiniCPM5 1B · 4-bit · 618 MB.':'Local AI ready · WebGPU · MiniCPM5 Agentic v3 · Q4 · 688 MB.');idle();return model;}).catch(error=>{status(error.name==='AbortError'?'Loading stopped.':`Local AI could not load: ${error.message}. You can still use the query form.`);throw error;}).finally(()=>{loading=null;if(!turnBusy)busy(false);});
     return loading;
   }
   $('guideLoad').onclick=()=>enable().catch(()=>{});
@@ -81,7 +82,7 @@ export async function mountGuide(api,config={},enabled=false){
     },
     async forgetModel(url){
       if(turnBusy)throw Error('Stop the guide before removing its model.');
-      if(url===GEMMA_URL){
+      if(url===MODEL_URL){
         loadAbort?.abort();await loading?.catch(()=>{});if(llm){await llm.exit();llm=null;}
         $('guideLoad').hidden=false;status('Local model removed. Enable the guide to download it again.');
       }

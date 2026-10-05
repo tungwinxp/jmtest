@@ -6,8 +6,8 @@ async function post(path,body,signal){
 export async function localMlx(progress,signal){
   let health;
   try{health=await fetch(address+'/health',{signal:signal?AbortSignal.any([signal,AbortSignal.timeout(1000)]):AbortSignal.timeout(1000)}).then(r=>r.ok?r.json():null);}catch(error){if(signal?.aborted)throw error;return null;}
-  if(health?.backend!=='mlx'||health.model!=='TheStageAI/gemma-4-E2B-it')return null;
-  progress('Loading native MLX guide · 1.44 GB cached on this Mac…');
+  if(health?.backend!=='mlx'||health.model!=='mlx-community/MiniCPM5-1B-4bit')return null;
+  progress('Loading native MLX guide · MiniCPM5 1B · 4-bit · 618 MB…');
   await post('/load',{},signal);
   let active;
   const release=()=>post('/release',{request_id:active}).catch(()=>{});

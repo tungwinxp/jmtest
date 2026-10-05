@@ -42,5 +42,15 @@ class Boundaries(unittest.TestCase):
         finally:
             server.active_id = None; server.work.release()
 
+    def test_minicpm_xml_uses_only_declared_tools_and_parameters(self):
+        tools = [{'function': {'name': 'search_motif', 'parameters': {'properties': {
+            'name': {'type': 'string'}, 'database_ids': {'type': 'array'}}}}}]
+        text = '<function name="search_motif"><param name="name">chymotrypsin</param><param name="database_ids">["1"]</param></function> extra output'
+        result = server.tool_call(text, tools)
+        self.assertEqual(json.loads(result['arguments']), {'name': 'chymotrypsin', 'database_ids': ['1']})
+        self.assertIsNone(server.tool_call('<function name="search_motif">', tools))
+        with self.assertRaises(ValueError): server.tool_call(text.replace('search_motif', 'unknown'), tools)
+        with self.assertRaises(ValueError): server.tool_call(text.replace('database_ids', 'arbitrary_path'), tools)
+
 
 if __name__ == '__main__': unittest.main()
