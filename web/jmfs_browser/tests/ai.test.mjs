@@ -96,7 +96,7 @@ test('Viewer actions and ligand evidence use tools without launching a search or
 test('Simple viewer requests use one cached inference and retry failed actions',async()=>{
   let calls=0,fail=true;const menus=[];
   const api={state:()=>({query:{motif:'A1-3',database_ids:['0']},databases:[],results:null}),viewerCommand:()=>{if(fail){fail=false;throw Error('Try again');}return {motif_only:true};}};
-  const llm={createChatCompletion:async params=>{calls++;assert.equal(params.cache_prompt,true);assert.equal(params.chat_template_kwargs.enable_thinking,false);menus.push(JSON.stringify(params.tools));assert.deepEqual(params.tools.map(t=>t.function.name),['protein_view']);return {choices:[{message:{role:'assistant',tool_calls:[{id:String(calls),function:{name:'protein_view',arguments:'{"action":"motif"}'}}]}}]};}};
+  const llm={createChatCompletion:async params=>{calls++;assert.equal(params.cache_prompt,true);assert.equal(params.chat_template_kwargs.enable_thinking,false);menus.push(JSON.stringify(params.tools));const names=params.tools.map(t=>t.function.name);assert(names.includes('show_motif_only')&&names.includes('hide_target')&&!names.includes('protein_view'));return {choices:[{message:{role:'assistant',tool_calls:[{id:String(calls),function:{name:'show_motif_only',arguments:'{}'}}]}}]};}};
   const agent=createAgent(api);await agent.turn('Show just the motif',llm);
   assert.equal(calls,2);assert.equal(menus[0],menus[1]);assert.match(agent.trace[0].result.error,/Try again/);
   calls=0;await agent.turn('Show just the motif',llm);assert.equal(calls,1);
@@ -190,4 +190,21 @@ test('Small-model view calls keep what the chosen action takes; annotation answe
     globalThis.fetch=async()=>new Response('',{status:500});let asked=0;
     assert.match(await createAgent(api).turn('Do any of these hits bind calcium?',{createChatCompletion:async()=>{asked++;return {choices:[{message:{role:'assistant',tool_calls:[{id:'evidence',function:{name:'annotate_hits',arguments:'{}'}}]}}]};}}),/remain unknown/);assert.equal(asked,1);
   }finally{globalThis.fetch=original;}
+});
+
+test('The browser model gets one display tool per intent, also for wording the hints do not know',async()=>{
+  const commands=[],state={query:{motif:'A1-3',chemistry_positions:'',database_ids:['0']},databases:[{id:'0',name:'Example',available:true,example:true}],viewer:{chains:['A','B']},results:null};
+  const api={state:()=>state,viewerCommand:async input=>{commands.push(input);return {ok:true};}};
+  const menus=[],call=(name,args={},backend)=>({backend,createChatCompletion:async params=>{menus.push(params.tools?.map(tool=>tool.function.name));return {choices:[{message:{role:'assistant',tool_calls:[{id:'view',function:{name,arguments:JSON.stringify(args)}}]}}]};}});
+  assert.equal(await createAgent(api).turn('Hide the target.',call('hide_target')),'Updated the protein view.');
+  await createAgent(api).turn('Colour the target green.',call('set_color',{part:'target',color:'Green'}));
+  await createAgent(api).turn('Show only chains B and A.',call('show_only_chains',{chains:['B','A']}));
+  await createAgent(api).turn('Show hit 3.',call('open_hit_number',{rank:'3'}));
+  // "strip it down to the motif" matches no keyword hint; the display tools are still offered.
+  assert.equal(await createAgent(api).turn('strip it down to the motif',call('show_motif_only')),'Updated the protein view.');
+  assert.deepEqual(commands,[{action:'query'},{action:'color',part:'target',color:'#2ca02c'},{action:'visibility',chains:['A','B']},{action:'select_hit',hit_rank:3},{action:'motif'}]);
+  assert(menus.every(menu=>menu.includes('zoom_in')&&!menu.includes('protein_view')));
+  await createAgent(api).turn('Hide the target.',call('protein_view',{action:'query'},'mlx'));assert.deepEqual(menus.at(-1),['protein_view']);
+  const error=await createAgent(api).turn('Pan somewhere.',{createChatCompletion:async()=>({choices:[{message:menus.push(0)%2?{role:'assistant',tool_calls:[{id:'pan',function:{name:'pan_view',arguments:'{"direction":"sideways"}'}}]}:{role:'assistant',content:''}}]})});
+  assert.match(error,/left, right, up or down/);
 });

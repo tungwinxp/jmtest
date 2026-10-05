@@ -47,7 +47,7 @@ for(const file of argv){
     try{await agent.turn(row.text,llm);}catch(error){thrown=error.message;}
     const first=agent.trace[0],args=first?JSON.parse(first.args):null;let ok,detail;
     if(row.kind==='view'){
-      ok=row.accept.some(want=>sameView(commands[0],want));detail=commands[0]?JSON.stringify(commands[0]):first?first.name+' '+first.args:offered.includes('protein_view')?thrown||'no call':'display tool not offered by the keyword gate';
+      ok=row.accept.some(want=>sameView(commands[0],want));detail=commands[0]?JSON.stringify(commands[0]):first?first.name+' '+first.args:offered.length?thrown||'no call':'no display tool offered';
       count('view · '+row.group,ok);
     }else if(row.kind==='search'){
       const want=row.accept,tool=first?.name==='search_motif',name=tool&&lower(args.name)===want.name,organism=tool&&want.organism.includes(lower(args.organism)),database=tool&&JSON.stringify(args.database_ids)===JSON.stringify(databaseIds[want.database]);

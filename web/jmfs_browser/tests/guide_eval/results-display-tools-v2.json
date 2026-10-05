@@ -1,0 +1,536 @@
+{
+ "label": "display-tools-v2",
+ "backend": "browser prompt",
+ "scored": 307,
+ "median_ms": 105,
+ "p90_ms": 674,
+ "accuracy": {
+  "all commands": "222/307 (72%)",
+  "view · color": "11/25 (44%)",
+  "view · download": "14/16 (88%)",
+  "view · focus": "15/18 (83%)",
+  "view · motif": "19/22 (86%)",
+  "view · pan": "13/15 (87%)",
+  "view · query": "12/20 (60%)",
+  "view · reset_colors": "15/15 (100%)",
+  "view · rotate": "24/27 (89%)",
+  "view · select_hit": "22/26 (85%)",
+  "view · target": "12/20 (60%)",
+  "view · visibility": "32/57 (56%)",
+  "view · whole command": "222/307 (72%)",
+  "view · whole": "8/20 (40%)",
+  "view · zoom": "25/26 (96%)"
+ },
+ "failures": [
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "can you hide everything except the motif?",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "leave only the motif visible",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "reduce the view to the motif",
+   "got": "{\"action\":\"focus\"}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "Show the whole target.",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "bring back the whole protein",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show query and target together",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show the entire superposition",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "display the whole thing",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show all of it again",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "can I see the full query and hit side by side in the overlay?",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "put the whole structures back on screen",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show whole query + whole target",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "unhide everything",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "display everything again please",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show both chains sets, query and hit",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the hit protein",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "remove the target from view",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "turn off the target",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "get the target out of the way",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "take the target away",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the database hit",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "make the target disappear",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the tagret",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "remove the query from view",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "get my query out of the way",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "show the hit structure only",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "view only the matched protein",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "take the query away",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "make the query disappear",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "display only the database hit",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "hide the qeury",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "focus",
+   "text": "recentre on the motif",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "focus",
+   "text": "recenter on the motif",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "focus",
+   "text": "focus on the superposed residues",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "no side chains please",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide the chemistry atoms",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display without sidechains",
+   "got": "{\"action\":\"visibility\",\"chains\":[\"A\",\"B\",\"C\"]}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide the stick atoms on the motif",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "switch the side chains on",
+   "got": "{\"action\":\"visibility\",\"sidechains\":false}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Show the target again.",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Show the query context.",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "turn the query on",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display the query context again",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Turn off motif only.",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "stop showing only the motif",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "leave motif-only view",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show more than just the motif again",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "disable the motif only view",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display just chain A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide every chain except A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "only chain A please",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show chain A alone",
+   "got": "The model selected an unavailable tool."
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide chain C",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display chains A and B, hide the rest",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show A and B only",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "remove chain C from the view",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Hide chain A.",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display B and C but not A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "take chain A out of the view",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "open the third hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "display the second hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "display the fifth hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "view hit five please",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "flip the view around, rotate 180",
+   "got": "{\"action\":\"pan\",\"dx\":100}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "rotate the view on the x-axis",
+   "got": "{\"action\":\"rotate\",\"angle\":0,\"axis\":\"x\"}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "Rotate -90 degrees.",
+   "got": "{\"action\":\"rotate\",\"angle\":90}"
+  },
+  {
+   "kind": "view",
+   "group": "zoom",
+   "text": "zoom in to the motif",
+   "got": "{\"action\":\"focus\"}"
+  },
+  {
+   "kind": "view",
+   "group": "pan",
+   "text": "Pan down.",
+   "got": "{\"action\":\"pan\",\"dx\":-100}"
+  },
+  {
+   "kind": "view",
+   "group": "pan",
+   "text": "pan down a bit",
+   "got": "{\"action\":\"pan\",\"dx\":-100}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "Color the target green.",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the target blue",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the hit protein grey",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the target structure purple",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "can you color the target light blue?",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color target red",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "Color the query motif red.",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the query motif yellow",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the motif residues of the query magenta",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "Color the matched target residues orange.",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the target motif green",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the target match cyan",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the matched residues on the target pink",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the gated residues dark red",
+   "got": "{\"action\":\"color\",\"part\":\"target\",\"color\":\"#000000\"}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "download this hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "I want the file for this hit, download it",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  }
+ ]
+}

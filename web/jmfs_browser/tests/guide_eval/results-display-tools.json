@@ -1,0 +1,662 @@
+{
+ "label": "display-tools",
+ "backend": "browser prompt",
+ "scored": 307,
+ "median_ms": 113,
+ "p90_ms": 555,
+ "accuracy": {
+  "all commands": "201/307 (65%)",
+  "view · color": "17/25 (68%)",
+  "view · download": "10/16 (63%)",
+  "view · focus": "16/18 (89%)",
+  "view · motif": "19/22 (86%)",
+  "view · pan": "14/15 (93%)",
+  "view · query": "7/20 (35%)",
+  "view · reset_colors": "15/15 (100%)",
+  "view · rotate": "22/27 (81%)",
+  "view · select_hit": "21/26 (81%)",
+  "view · target": "8/20 (40%)",
+  "view · visibility": "27/57 (47%)",
+  "view · whole command": "201/307 (65%)",
+  "view · whole": "0/20 (0%)",
+  "view · zoom": "25/26 (96%)"
+ },
+ "failures": [
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "can you hide everything except the motif?",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "hide the rest of the protein and keep the motif",
+   "got": "{\"action\":\"query\"}"
+  },
+  {
+   "kind": "view",
+   "group": "motif",
+   "text": "reduce the view to the motif",
+   "got": "{\"action\":\"focus\"}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "Show the whole target.",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show everything",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show both the query and the target",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "display the full structures",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show the complete overlay of query and target",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "bring back the whole protein",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "I want to see both proteins in full",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show query and target together",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show the entire superposition",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "display the whole thing",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "view both structures",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show all of it again",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "can I see the full query and hit side by side in the overlay?",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show the full context for both",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "put the whole structures back on screen",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show whole query + whole target",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "unhide everything",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show the full proteins, not just the motif",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "display everything again please",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "whole",
+   "text": "show both chains sets, query and hit",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the hit protein",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "show only the query",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "just the query structure please",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "I only want to see my query",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "display the query alone",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "get the target out of the way",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "show the reference structure only",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "view only my query protein",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the database hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "only the query, no target",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "show just the query",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "query only",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "query",
+   "text": "hide the tagret",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "show only the target",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "just the hit protein please",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "I only want to see the target",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "display the target alone",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "get my query out of the way",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "show the hit structure only",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "view only the matched protein",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "take the query away",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "only the target, no query",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "show just the target",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "display only the database hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "target",
+   "text": "show the target by itself",
+   "got": "{\"action\":\"visibility\",\"target\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "focus",
+   "text": "recentre on the motif",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "focus",
+   "text": "focus on the superposed residues",
+   "got": "{\"action\":\"visibility\",\"query\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "no side chains please",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display without sidechains",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "I do not want to see the sidechains",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "switch the side chains on",
+   "got": "{\"action\":\"visibility\",\"sidechains\":false}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "unhide the target",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display the hit protein again",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "unhide the query",
+   "got": "{\"action\":\"target\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Turn off motif only.",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "stop showing only the motif",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "leave motif-only view",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show more than just the motif again",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "disable the motif only view",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Show only chain A.",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display just chain A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide every chain except A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "only chain A please",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show chain A alone",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Show only chains A and B.",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "hide chain C",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display chains A and B, hide the rest",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show A and B only",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "remove chain C from the view",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Hide chain A.",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show only chains B and C",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display B and C but not A",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "take chain A out of the view",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "Show all chains.",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "display every chain",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "make chains A, B and C all visible",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "visibility",
+   "text": "show all three chains again",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "open the third hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "display the second hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "display the fifth hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "view hit five please",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "select_hit",
+   "text": "view the seventh hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "turn the view a quarter turn",
+   "got": "{\"action\":\"pan\",\"dx\":100}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "spin the view 90 degrees",
+   "got": "{\"action\":\"pan\",\"dx\":100}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "flip the view around, rotate 180",
+   "got": "{\"action\":\"pan\",\"dx\":100}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "show me the back, rotate 180",
+   "got": "{\"action\":\"visibility\",\"sidechains\":true}"
+  },
+  {
+   "kind": "view",
+   "group": "rotate",
+   "text": "Rotate -90 degrees.",
+   "got": "{\"action\":\"rotate\",\"angle\":90}"
+  },
+  {
+   "kind": "view",
+   "group": "zoom",
+   "text": "zoom in to the motif",
+   "got": "{\"action\":\"focus\"}"
+  },
+  {
+   "kind": "view",
+   "group": "pan",
+   "text": "Pan down.",
+   "got": "{\"action\":\"pan\",\"dx\":-100}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the hit protein grey",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "can you color the target light blue?",
+   "got": "set_color {\"part\": \"target\", \"color\": \"light blue\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the motif residues of the query magenta",
+   "got": "{\"action\":\"motif\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "Color the matched target residues orange.",
+   "got": "{\"action\":\"color\",\"part\":\"target\",\"color\":\"#ff7f0e\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "color the target match cyan",
+   "got": "{\"action\":\"color\",\"part\":\"target\",\"color\":\"#17becf\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the matched residues on the target pink",
+   "got": "{\"action\":\"color\",\"part\":\"target\",\"color\":\"#f4adb3\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the gated residues dark red",
+   "got": "{\"action\":\"color\",\"part\":\"queryMatch\",\"color\":\"#ff0000\"}"
+  },
+  {
+   "kind": "view",
+   "group": "color",
+   "text": "colour the second chain purple",
+   "got": "{\"action\":\"color\",\"part\":\"target\",\"color\":\"#9467bd\"}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "download this hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "save this structure, download it",
+   "got": "display tool not offered by the keyword gate"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "export this hit structure",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "export current hit",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "I want the file for this hit, download it",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  },
+  {
+   "kind": "view",
+   "group": "download",
+   "text": "export the aligned hit to a file",
+   "got": "{\"action\":\"select_hit\",\"hit_rank\":1}"
+  }
+ ]
+}

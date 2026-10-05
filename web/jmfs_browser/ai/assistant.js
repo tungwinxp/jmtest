@@ -1,4 +1,4 @@
-import {createAgent} from './agent.js?v=34';
+import {createAgent} from './agent.js?v=35';
 import {loadLocalModel,guideGpuAvailable,MODEL_URL,forgetModel,removeRetiredModel} from './model.js?v=31';
 export async function mountGuide(api,config={},enabled=false){
   const panel=document.querySelector('.panel');

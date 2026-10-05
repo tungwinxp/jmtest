@@ -61,5 +61,34 @@ export function makeTools(z){
   };
   // Runtime validation retains all bounds. Keep the model grammar small.
   const parameters=schema=>JSON.parse(JSON.stringify(z.toJSONSchema(schema,{target:'draft-7'}),(key,value)=>['$schema','pattern','minLength','maxLength','minimum','maximum','default'].includes(key)?undefined:value));
-  return {schemas,definitions:Object.entries(schemas).map(([name,schema])=>({type:'function',function:{name,description:descriptions[name],parameters:parameters(schema)}}))};
+  // One display tool per intent: a small model picks a plainly named tool far more reliably than
+  // one action out of thirteen. Each call becomes the protein_view input the workbench takes.
+  const COLORS={red:'#d62728',green:'#2ca02c',blue:'#1f77b4',yellow:'#f2c80f',orange:'#ff7f0e',purple:'#9467bd',violet:'#9467bd',pink:'#f4adb3',magenta:'#c83d6f',cyan:'#17becf',teal:'#2a9d8f',brown:'#8c564b',black:'#000000',white:'#ffffff',gray:'#9aa0a6',grey:'#9aa0a6','light blue':'#9ecae1','dark blue':'#08519c',navy:'#08306b','light green':'#a1d99b','dark green':'#006d2c',lime:'#7fc97f',gold:'#d4a017',salmon:'#fa8072',lavender:'#b39ddb',turquoise:'#17becf'};
+  const PARTS={query_motif:'queryMatch',target:'target',target_motif:'targetMatch',chemistry:'chemistry',query_chain_1:'chain0',query_chain_2:'chain1',query_chain_3:'chain2',query_chain_4:'chain3'};
+  const none={type:'object',properties:{},additionalProperties:false},takes=(properties,required=[])=>({type:'object',properties,required,additionalProperties:false});
+  const view={
+    show_motif_only:['Show only the matched motif residues and hide the rest of both structures.',none,()=>({action:'motif'})],
+    show_both_structures:['Show the complete query and target together: both whole proteins, the full superposition. Also use this to stop showing only the motif.',none,()=>({action:'whole'})],
+    hide_target:['Hide the target (the hit protein) so only the query remains.',none,()=>({action:'query'})],
+    show_only_query:['Show only the query (the reference structure) and hide the target.',none,()=>({action:'query'})],
+    hide_query:['Hide the query (the reference structure) so only the target remains.',none,()=>({action:'target'})],
+    show_only_target:['Show only the target (the hit protein) and hide the query.',none,()=>({action:'target'})],
+    unhide_query:['Make the query visible again after it was hidden; nothing else changes.',none,()=>({action:'visibility',query:true})],
+    unhide_target:['Make the target visible again after it was hidden; nothing else changes.',none,()=>({action:'visibility',target:true})],
+    show_sidechain_sticks:['Show the side-chain (residue) atoms as sticks.',none,()=>({action:'visibility',sidechains:true})],
+    hide_sidechain_sticks:['Hide the side-chain (residue) atoms; use this when the user does not want to see side chains.',none,()=>({action:'visibility',sidechains:false})],
+    show_only_chains:['Keep only the listed chain IDs visible and hide every other chain, for example chains A and B.',takes({chains:{type:'array',items:{type:'string'},description:'Chain IDs from VIEWER_CONTEXT'}},['chains']),a=>({action:'visibility',chains:[...new Set(Array.isArray(a.chains)?a.chains:String(a.chains??'').split(/[\s,]+/).filter(Boolean))].sort()})],
+    focus_on_motif:['Centre the camera on the motif without hiding anything.',none,()=>({action:'focus'})],
+    open_hit_number:['Switch the viewer to another hit in the results list by its rank number.',takes({rank:{type:'integer',description:'1 is the best hit'}},['rank']),a=>({action:'select_hit',hit_rank:Number(a.rank)})],
+    zoom_in:['Zoom in: bring the structure closer.',none,()=>({action:'zoom',factor:2})],
+    zoom_out:['Zoom out: move the structure further away.',none,()=>({action:'zoom',factor:.5})],
+    rotate_view:['Rotate the structure.',takes({angle:{type:'number',description:'Degrees; default 90; negative turns the other way'},axis:{type:'string',enum:['x','y','z'],description:'Default y'}}),a=>({action:'rotate',...(a.angle!==undefined&&a.angle!==''&&Number.isFinite(Number(a.angle))?{angle:Number(a.angle)}:{}),...(a.axis?{axis:a.axis}:{})})],
+    pan_view:['Move the view left, right, up or down.',takes({direction:{type:'string',enum:['left','right','up','down']}},['direction']),a=>{const move={left:{dx:-100},right:{dx:100},up:{dy:-100},down:{dy:100}}[a.direction];if(!move)throw Error('Choose left, right, up or down.');return {action:'pan',...move};}],
+    set_color:['Change the colour of one part of the structures.',takes({part:{type:'string',enum:Object.keys(PARTS)},color:{type:'string',description:'A colour name or six-digit hex such as #2ca02c'}},['part','color']),a=>({action:'color',part:PARTS[a.part]??a.part,color:COLORS[String(a.color).toLowerCase().trim()]??a.color})],
+    reset_colors:['Restore the default colours.',none,()=>({action:'reset_colors'})],
+    download_structure_file:['Download, save or export the displayed structure (the current hit superposition) as a file.',none,()=>({action:'download'})],
+  };
+  const viewDefinitions=Object.entries(view).map(([name,[description,parameters]])=>({type:'function',function:{name,description,parameters}}));
+  const viewCall=(name,args)=>view[name]?.[2](args&&typeof args==='object'?args:{});
+  return {schemas,viewDefinitions,viewCall,definitions:Object.entries(schemas).map(([name,schema])=>({type:'function',function:{name,description:descriptions[name],parameters:parameters(schema)}}))};
 }
