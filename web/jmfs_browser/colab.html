@@ -8,20 +8,66 @@
   <link rel="preload" href="https://cdn.jsdelivr.net/npm/3dmol@2.5.5/build/3Dmol-min.js" as="script" crossorigin="anonymous">
   <style>
     body{margin:0;background:#fff;color:#202124;font:13px/1.45 system-ui,sans-serif}
-    #intro{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
-    #intro>div{max-width:520px;text-align:center}#intro p{margin:0 0 24px;line-height:1.65}
-    #introLogo{display:block;width:80px;height:auto;margin:0 auto 24px}
+    /* Landing screen only. Every rule is scoped to #intro, which is removed when the workbench opens. */
+    #intro{position:relative;box-sizing:border-box;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:32px 20px;overflow:hidden;font-size:15px;line-height:1.6}
+    #intro .bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;animation:jm-fade .6s ease-out both}
+    #intro .t1{transform:translate(5vw,7vh)}#intro .t2{transform:translate(calc(-300px - 5vw),calc(-190px - 7vh))}
+    #intro .tr polyline{fill:none;stroke:#c4c7cc;stroke-width:1.25;stroke-linejoin:round;stroke-dasharray:1;animation:jm-draw .8s .1s ease-out both}
+    #intro .tr circle{fill:#fff;stroke:#9aa0a6;stroke-width:1.25;animation:jm-fade .35s .45s both}
+    #intro .tr .m{fill:#3c4043;stroke:#3c4043;transform-box:fill-box;transform-origin:center;animation:jm-pop .35s .6s cubic-bezier(.2,.7,.2,1) both}
+    #intro .tr polygon{fill:#3c4043;fill-opacity:.04;stroke:#9aa0a6;stroke-dasharray:3 4;animation:jm-fade .35s .6s both}
+    #intro .card{position:relative;max-width:540px;text-align:center}
+    #intro .card>*{animation:jm-rise .45s calc(var(--i,0)*70ms) cubic-bezier(.2,.7,.2,1) both}
+    #introLogo{display:block;width:72px;height:auto;margin:0 auto 20px}
+    #intro h1{margin:0 0 10px;font:600 28px/1.2 system-ui,sans-serif;letter-spacing:-.01em}
+    #intro p{max-width:46ch;margin:0 auto 20px;color:#3c4043}
+    #intro ul{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin:0 0 28px;padding:0;list-style:none;color:#5f6368;font-size:12px}
+    #intro li::before{content:"";display:inline-block;width:6px;height:6px;margin-right:7px;border-radius:50%;background:#506e4c;vertical-align:1px}
     #intro .actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-    #intro button{height:36px;padding:0 16px;border:1px solid #dadce0;border-radius:6px;background:#f8f9fa;color:#202124;font:13px system-ui;cursor:pointer}
-    #intro button:hover{background:#f1f3f4}#intro button:focus-visible{outline:2px solid #3c4043;outline-offset:2px}
+    #intro button{height:40px;padding:0 20px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#202124;font:13px/1 system-ui,sans-serif;cursor:pointer;transition:background-color .12s,border-color .12s}
+    #intro button:enabled:hover{border-color:#9aa0a6;background:#f1f3f4}
+    #intro #next{border-color:#3c4043;background:#3c4043;color:#fff;font-weight:600}#intro #next:enabled:hover{border-color:#202124;background:#202124}
+    #intro button:focus-visible{outline:2px solid #3c4043;outline-offset:2px}#intro button:disabled{opacity:.55;cursor:default}
+    #intro .note{margin:16px auto 0;color:#5f6368;font-size:12px}
+    #intro #boot{min-height:20px;margin:12px auto 0;color:#202124;font-size:13px}
+    #intro.opening #boot::before{content:"";display:inline-block;width:10px;height:10px;margin-right:8px;border:1.5px solid #dadce0;border-top-color:#3c4043;border-radius:50%;vertical-align:-1px;animation:jm-spin .7s linear infinite}
+    @keyframes jm-rise{from{opacity:0;transform:translateY(10px)}}@keyframes jm-fade{from{opacity:0}}
+    @keyframes jm-pop{from{opacity:0;transform:scale(0)}}@keyframes jm-draw{from{stroke-dashoffset:1}}@keyframes jm-spin{to{transform:rotate(1turn)}}
+    @media(max-width:1000px){#intro .t1{transform:translate(12px,16px) scale(.55)}#intro .t2{transform:translate(-177px,-121px) scale(.55)}}
+    @media(max-width:600px){#intro h1{font-size:24px}}
+    @media(max-width:600px) and (max-height:780px){#intro .t1{transform:translate(8px,8px) scale(.4)}#intro .t2{display:none}}
+    @media(max-width:480px){#intro .actions button{flex:1 1 100%}}
+    @media(prefers-reduced-motion:reduce){#intro *,#intro ::before{animation:none!important}}
   </style>
 </head>
 <body>
-  <main id="intro"><div><img id="introLogo" src="./assets/logo.svg" alt="JumpMASTER"><p id="introText">JumpMASTER finds similar structural motifs in protein and nucleic acid databases. Computation runs locally on your computer. Models, structures, and database data download when needed, then stay cached locally in your browser. Continue to the workbench, or enable the Local AI Guide for help preparing searches and interpreting your results.</p><div class="actions"><button id="next">Next</button><button id="enableGuide">Enable the Local AI Guide</button></div><p id="boot" role="status" style="margin-top:12px"></p></div></main>
+  <main id="intro">
+    <!-- Decorative: a dot lattice and two backbone traces that share one three-residue motif. -->
+    <svg class="bg" aria-hidden="true">
+      <defs><pattern id="jmDots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#dadce0"/></pattern>
+      <radialGradient id="jmFade"><stop offset=".35" stop-color="#fff"/><stop offset=".95" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+      <rect width="100%" height="100%" fill="url(#jmDots)"/><rect width="100%" height="100%" fill="url(#jmFade)"/>
+      <g class="tr t1"><polygon points="100,48 232,100 124,140"/><polyline pathLength="1" points="10,40 56,70 100,48 146,84 190,60 232,100 214,150 166,168 124,140 78,170 36,150"/>
+        <circle cx="10" cy="40" r="2.5"/><circle cx="56" cy="70" r="2.5"/><circle cx="146" cy="84" r="2.5"/><circle cx="190" cy="60" r="2.5"/><circle cx="214" cy="150" r="2.5"/><circle cx="166" cy="168" r="2.5"/><circle cx="78" cy="170" r="2.5"/><circle cx="36" cy="150" r="2.5"/>
+        <circle class="m" cx="100" cy="48" r="4"/><circle class="m" cx="232" cy="100" r="4"/><circle class="m" cx="124" cy="140" r="4"/></g>
+      <svg x="100%" y="100%" overflow="visible"><g class="tr t2"><polygon points="215,137 73,134 161,59"/><polyline pathLength="1" points="12,96 73,134 116,176 170,170 215,137 268,150 300,104 262,62 214,38 161,59 112,34 64,52"/>
+        <circle cx="12" cy="96" r="2.5"/><circle cx="116" cy="176" r="2.5"/><circle cx="170" cy="170" r="2.5"/><circle cx="268" cy="150" r="2.5"/><circle cx="300" cy="104" r="2.5"/><circle cx="262" cy="62" r="2.5"/><circle cx="214" cy="38" r="2.5"/><circle cx="112" cy="34" r="2.5"/><circle cx="64" cy="52" r="2.5"/>
+        <circle class="m" cx="73" cy="134" r="4"/><circle class="m" cx="215" cy="137" r="4"/><circle class="m" cx="161" cy="59" r="4"/></g></svg>
+    </svg>
+    <div class="card">
+      <img id="introLogo" src="./assets/logo.svg" alt="JumpMASTER" width="72" height="91">
+      <h1 style="--i:1">Welcome to JumpMASTER</h1>
+      <p id="introText" style="--i:2">Find similar structural motifs across protein and nucleic acid databases. Searches run locally on your computer. Models, structures and database data download when needed, then stay cached in your browser.</p>
+      <ul style="--i:3"><li>Runs locally</li><li>Files stay on your computer</li><li>Cached for next time</li></ul>
+      <div class="actions" style="--i:4"><button id="next">Open the workbench</button><button id="enableGuide">Enable the local AI guide</button></div>
+      <p class="note" style="--i:5">The guide is optional: an on-device model (about 0.7&nbsp;GB, downloaded once) that helps you prepare searches and interpret results.</p>
+      <p id="boot" role="status"></p>
+    </div>
+  </main>
   <!-- The Colab form itself, not a copy: colab/app.html and colab/scene.js are fetched and filled
        exactly as colab/app.py fills them, with a browser transport in place of the kernel. -->
   <script type="module">
-    import { createTransport } from "./colab_transport.js?v=31";
+    import { createTransport } from "./colab_transport.js?v=32";
     import {fetchStructure} from './structure.js';
     import {savedIndexes,rememberIndex} from './range_cache.js?v=28';
 
@@ -71,7 +117,7 @@
       ? navigator.serviceWorker.register('./isolate.js',{scope:'./',type:'module',updateViaCache:'none'}).then(()=>navigator.serviceWorker.ready).catch(()=>null)
       : Promise.resolve(null);
     async function start(enableGuide=false){
-    document.getElementById('boot').textContent='Opening the workbench…';
+    document.getElementById('boot').textContent='Opening the workbench…';document.getElementById('intro').classList.add('opening');
     document.getElementById('next').disabled=document.getElementById('enableGuide').disabled=true;
     if(enableGuide&&!crossOriginIsolated&&!resume){
       await Promise.race([isolationReady,new Promise(resolve=>setTimeout(resolve,1000))]);
@@ -81,7 +127,7 @@
       const [template, sceneJs, catalog] = await resources;
       const demoIndexUrl = here("./assets/demo.jmfsgeom?v=29");
       window.jmfsTransport = createTransport({
-        workerUrl: new URL("./search_worker.js?v=30", import.meta.url),
+        workerUrl: new URL("./search_worker.js?v=32", import.meta.url),
         wasmUrl: new URL("./assets/jmfs_web_core.wasm?v=22", import.meta.url),
         demoIndexUrl,
         // `?cpuLanes=N` overrides the number of CPU workers used without WebGPU.
@@ -142,7 +188,7 @@
         finally{button.disabled=false;}
       };
       const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=29');document.head.append(style);
-      const {mountJobs}=await import('./jobs.js?v=31');
+      const {mountJobs}=await import('./jobs.js?v=32');
       const optional=document.createElement('section');optional.className='group guide';
       optional.innerHTML='<div class="bar"><h2>Local AI Guide</h2><button>Open guide</button></div>';
       document.querySelector('.panel header').after(optional);
@@ -151,7 +197,7 @@
         if(guideReady)return guideReady;
         const button=optional.querySelector('button');button.disabled=true;
         guideReady=(async()=>{try{
-          const {mountGuide}=await import('./ai/assistant.js?v=31');
+          const {mountGuide}=await import('./ai/assistant.js?v=32');
           const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json()).catch(()=>({}));
           window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enabled);optional.remove();
           if(!enabled)document.getElementById('guideToggle').click();
@@ -163,7 +209,10 @@
       optional.querySelector('button').onclick=()=>openGuide().catch(()=>{});
       if(enableGuide)openGuide(true).catch(()=>{});
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
+      // Fetch the search core while idle so the first Search does not wait for it.
+      document.head.append(Object.assign(document.createElement('link'),{rel:'prefetch',href:here('./assets/jmfs_web_core.wasm?v=22')}));
     } catch (error) {
+      document.getElementById('intro')?.classList.remove('opening');
       const status=document.getElementById('boot')||document.getElementById('status');status.textContent=`The JMFS interface could not start: ${error.message}`;
     }
     }

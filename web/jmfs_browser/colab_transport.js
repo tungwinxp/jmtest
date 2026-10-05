@@ -3,7 +3,7 @@
 // two calls with local search workers, so the shared Rust core runs on this computer's WebGPU
 // adapter or, without one, on WASM CPU workers. Nothing is uploaded.
 import {loadCheckpoint,saveCheckpoint,deleteCheckpoint} from './checkpoint.js?v=25';
-import {savedIndexes} from './range_cache.js';
+import {savedIndexes} from './range_cache.js?v=28';
 import {claimCompute} from './compute.js?v=30';
 export const JOB_KEY='workbench-job';
 

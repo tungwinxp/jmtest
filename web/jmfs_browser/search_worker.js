@@ -5,7 +5,7 @@ import { parsePdb, prepareQuery } from "./query.js?v=24";
 import { WasmCore } from "./wasm_core.js?v=22";
 import { WebGpuLocalFilter } from "./webgpu.js?v=22";
 import { searchChunk, cpuChunkMetadata } from "./algorithm.js?v=22";
-import { remoteFdpCandidates, RemoteFdpCatalog } from "./fdp.js?v=22";
+import { remoteFdpCandidates, RemoteFdpCatalog } from "./fdp.js?v=32";
 import {
   BROWSER_SEARCH_RELEASE, CHECKPOINT_VERSION, checkpointKey, deleteCheckpoint,
   loadCheckpoint, saveCheckpoint,

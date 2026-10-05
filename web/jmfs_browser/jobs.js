@@ -64,7 +64,7 @@ export async function mountJobs(api,transport){
     if(job.kind==='index')await finishIndex(job);
     else notice('Model download is ready. Enable the Local AI Guide to use it.');
   }
-  let refreshing=false;
+  let refreshing=false,polling=true;
   const rates=new Map();
   async function refresh(){
     if(refreshing)return;refreshing=true;
@@ -79,6 +79,7 @@ export async function mountJobs(api,transport){
         if(!prior||loaded!==prior.loaded)rates.set(download.key,{loaded,time:performance.now(),eta});
         active.push({download,bg,loaded,eta});
       }
+      polling=active.some(item=>item.bg||item.download.status==='running');
       // Keep controls in place while focused; polling must not steal keyboard focus.
       if(list.contains(document.activeElement))return;
       list.replaceChildren();
@@ -116,7 +117,8 @@ export async function mountJobs(api,transport){
   });
   window.addEventListener('jmfs-job',refresh);window.addEventListener('jmfs-download',refresh);
   navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='jmfs-download')refresh();});
-  const timer=setInterval(refresh,1000);window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+  // Job and download events refresh the list; the timer only tracks work in progress.
+  const timer=setInterval(()=>{if(!document.hidden&&(polling||api.state().busy))refresh();},1000);window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
   await refresh();
   const saved=await transport.savedJob();
   if(saved?.status==='running'&&resume.checked)api.resumeJob(saved).catch(error=>notice(error.message));
