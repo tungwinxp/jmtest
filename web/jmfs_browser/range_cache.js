@@ -35,3 +35,29 @@ export async function rememberIndex(file){
   const handle=await folder.getFileHandle(file.name,{create:true});
   await file.stream().pipeTo(await handle.createWritable());
 }
+
+export async function cachedDatabases(){
+  const items=new Map();
+  if(globalThis.caches){
+    const cache=await caches.open(STORE);
+    for(const request of await cache.keys()){
+      const address=new URL(request.url),url=address.searchParams.get('url');if(!url)continue;
+      const name=decodeURIComponent(new URL(url).pathname.split('/').pop());
+      const item=items.get(url)||{url,name,bytes:0};
+      if(address.pathname.endsWith('/range'))item.bytes+=Number(address.searchParams.get('length'))||0;
+      items.set(url,item);
+    }
+  }
+  for(const file of await savedIndexes())items.set('file:'+file.name,{name:file.name,bytes:file.size,file:true});
+  return [...items.values()];
+}
+export async function forgetDatabase({url,name,file}){
+  if(url&&globalThis.caches){
+    const cache=await caches.open(STORE);
+    for(const request of await cache.keys())if(new URL(request.url).searchParams.get('url')===url)await cache.delete(request);
+  }
+  if(file&&navigator.storage?.getDirectory){
+    const folder=await(await navigator.storage.getDirectory()).getDirectoryHandle('jmfs-index-files',{create:true});
+    await folder.removeEntry(name).catch(error=>{if(error.name!=='NotFoundError')throw error;});
+  }
+}

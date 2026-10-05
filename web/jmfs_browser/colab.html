@@ -22,7 +22,7 @@
   <script type="module">
     import { createTransport } from "./colab_transport.js?v=25";
     import {fetchStructure} from './structure.js';
-    import {savedIndexes,rememberIndex} from './range_cache.js';
+    import {savedIndexes,rememberIndex} from './range_cache.js?v=28';
 
     const text = async (url) => {
       const response = await fetch(url);
@@ -73,8 +73,8 @@
     }
     try {
       const [template, sceneJs, catalog] = await Promise.all([
-        text("../../colab/app.html?v=27"),
-        text("../../colab/scene.js?v=27"),
+        text("../../colab/app.html?v=28"),
+        text("../../colab/scene.js?v=28"),
         listed(),
       ]);
       const demoIndexUrl = here("./assets/demo.jmfsgeom");
@@ -141,10 +141,10 @@
         catch(error){document.getElementById('status').textContent=error.message;}
         finally{button.disabled=false;}
       };
-      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=27');document.head.append(style);
-      const {mountJobs}=await import('./jobs.js?v=25');
+      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=28');document.head.append(style);
+      const {mountJobs}=await import('./jobs.js?v=28');
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
-      const {mountGuide}=await import('./ai/assistant.js?v=27');
+      const {mountGuide}=await import('./ai/assistant.js?v=28');
       const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
       window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {

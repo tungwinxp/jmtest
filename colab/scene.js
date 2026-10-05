@@ -1,7 +1,7 @@
 // Shared molecular rendering for the native notebook and optional HTML form.
 // Brighter variants of the user's Ghibli palette, reserved for structures.
-function jmfsChainColor(index){return globalThis.jmfsColors?.chains?.[index%4]||['#f29bb0','#b7d69e','#f07f67','#a7b978'][index%4];}
-function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#f29bb0',chemistry:'#c83d6f',target:'#c9c9c9',targetMatch:'#969696'}[name];}
+function jmfsChainColor(index){return globalThis.jmfsColors?.chains?.[index%4]||['#93c7cc','#b1bcc4','#eddaa0','#efc3b6'][index%4];}
+function jmfsColor(name){return globalThis.jmfsColors?.[name]||{queryMatch:'#f4adb3',chemistry:'#c83d6f',target:'#e2e5e9',targetMatch:'#b8bdc5'}[name];}
 // Viewer selections keep contiguous anchors together instead of creating singleton segments.
 function jmfsMotifRanges(anchors){
   const runs=[],seen=new Set();
@@ -13,7 +13,7 @@ function jmfsMotifRanges(anchors){
   }
   return runs.map(r=>r.chain+r.start+(r.end===r.start?'':'-'+r.end)).join(',');
 }
-function installJMFSScene(viewer, secondary, chainNames={}) {
+function installJMFSScene(viewer, secondary, chainNames={}, chemistry=[]) {
   const atoms=viewer.getModel().selectedAtoms({});
   const isMatch=a=>a.chain==='query_match'||a.chain==='target_match';
   for(const a of atoms){a.ss='c';a.ssbegin=false;a.ssend=false;}
@@ -24,7 +24,9 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     }
   }
   let enabled=new Set(atoms.filter(a=>!isMatch(a)).map(a=>a.chain));
-  let showQuery=true,showTarget=true,motifOnly=false;
+  let showQuery=false,showTarget=true,motifOnly=false;
+  let sideChains=true;
+  const chemistryResidues=new Set(),chemistryMatches=new Set();
   for(const role of ['query','target']){
     const context=atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)&&(a.atom==='CA'||a.atom==="C4'"));
     for(const a of atoms.filter(a=>a.chain===role+'_match')){
@@ -33,9 +35,16 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
       if(origins.length===1)a.jmfsOrigin=origins[0];
     }
   }
+  const queryMatches=atoms.filter(a=>a.chain==='query_match'),targetMatches=atoms.filter(a=>a.chain==='target_match');
+  for(const [index,a] of queryMatches.entries()){
+    const origin=a.jmfsOrigin;
+    if(!origin||!chemistry.some(r=>origin.chain==='query_'+r.chain&&origin.resi>=r.start&&origin.resi<=r.end))continue;
+    chemistryMatches.add(a);
+    for(const anchor of [a,targetMatches[index]])if(anchor?.jmfsOrigin){const b=anchor.jmfsOrigin;chemistryResidues.add(b.chain+'\0'+b.resi+'\0'+(b.icode||''));}
+  }
   function visible(a){
-    if(!(a.chain.startsWith('query_')?showQuery:showTarget))return false;
     if(isMatch(a))return !a.contextChains.length||a.contextChains.some(c=>enabled.has(c));
+    if(!(a.chain.startsWith('query_')?showQuery:showTarget))return false;
     return !motifOnly&&enabled.has(a.chain);
   }
   const names='ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL SEC PYL ASX GLX UNK MSE'.split(' ');
@@ -54,7 +63,7 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
   viewer.setHoverDuration(180);
   viewer.setHoverable({},true,function(atom,_viewer,event,container){
     clearHover();
-    if(!visible(atom)||!container)return;
+    if((!visible(atom)&&!atom.style?.stick)||!container)return;
     const a=atom.jmfsOrigin||atom;
     const role=a.chain.startsWith('query_')?'Query':'Target';
     const location=isMatch(a)?(role==='Query'?'motif position ':'exported position ')+a.resi:
@@ -82,15 +91,17 @@ function installJMFSScene(viewer, secondary, chainNames={}) {
     tip.style.left=Math.max(4,Math.min(x+12,box.width-tip.offsetWidth-4))+'px';
     tip.style.top=Math.max(4,Math.min(y+12,box.height-tip.offsetHeight-4))+'px';
   },clearHover);
-  viewer.jmfsVisibility=function(chains,query=true,target=true,motif=false){
+  viewer.jmfsVisibility=function(chains,query=false,target=true,motif=false,sidechains=true){
     clearHover();
-    enabled=new Set(chains);showQuery=query;showTarget=target;motifOnly=motif;
+    enabled=new Set(chains);showQuery=query;showTarget=target;motifOnly=motif;sideChains=sidechains;
     viewer.setStyle({},{});
     for(const role of ['query','target']){
       const chains=[...new Set(atoms.filter(a=>a.chain.startsWith(role+'_')&&!isMatch(a)).map(a=>a.chain))].sort();
       chains.forEach((chain,index)=>viewer.setStyle({predicate:a=>visible(a)&&a.chain===chain}, {cartoon:{arrows:true,color:role==='target'?jmfsColor('target'):jmfsChainColor(index),opacity:.85}}));
       const motifColor=jmfsColor(role+'Match');
       viewer.setStyle({predicate:a=>visible(a)&&a.chain===role+'_match'}, {cartoon:{style:'trace',color:motifColor,thickness:role==='query'?.35:.18},sphere:{color:motifColor,radius:role==='query'?.36:.23}});
+      if(role==='query')viewer.addStyle({predicate:a=>visible(a)&&chemistryMatches.has(a)},{sphere:{radius:.36,color:jmfsColor('chemistry')}});
+      if(sideChains)viewer.addStyle({predicate:a=>enabled.has(a.chain)&&a.chain.startsWith(role+'_')&&!isMatch(a)&&chemistryResidues.has(a.chain+'\0'+a.resi+'\0'+(a.icode||''))},{stick:{radius:.16,color:role==='query'?jmfsColor('chemistry'):motifColor}});
     }
     viewer.render();
   };

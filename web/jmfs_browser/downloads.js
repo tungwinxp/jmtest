@@ -1,8 +1,8 @@
 import {loadCheckpoint,saveCheckpoint,deleteCheckpoint,listCheckpoints} from './checkpoint.js?v=25';
 
 const BLOCK=8*1024*1024,controllers=new Map();
-export const resumable=()=>localStorage.getItem('jmfs-resume')==='on';
-export const backgroundDownloads=()=>resumable()&&localStorage.getItem('jmfs-background-downloads')==='on';
+export const resumable=()=>localStorage.getItem('jmfs-resume')!=='off';
+export const backgroundDownloads=()=>resumable()&&localStorage.getItem('jmfs-background-downloads')!=='off';
 export function etaText(ms){
   if(!Number.isFinite(ms)||ms<0)return 'Estimating ETA…';
   const seconds=Math.ceil(ms/1000);return seconds<60?`ETA ${seconds}s`:`ETA ${Math.ceil(seconds/60)} min`;
@@ -71,7 +71,6 @@ export async function runDownload(job,{signal,onProgress=()=>{},background=false
   try{
     job.status='running';delete job.error;await writeJob(job);
     const registration=background?await navigator.serviceWorker.ready:null,manager=registration?.backgroundFetch;
-    if(background&&!manager)throw Error('This browser does not support closed-tab downloads. Use Resume with this page open.');
     if(manager){
       let active=await manager.get(job.key);
       if(!active){
