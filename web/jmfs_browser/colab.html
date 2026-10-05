@@ -141,10 +141,10 @@
         catch(error){document.getElementById('status').textContent=error.message;}
         finally{button.disabled=false;}
       };
-      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=28');document.head.append(style);
+      const style=document.createElement('link');style.rel='stylesheet';style.href=here('./ai/assistant.css?v=29');document.head.append(style);
       const {mountJobs}=await import('./jobs.js?v=28');
       await mountJobs(window.jmfsGuideApi,window.jmfsTransport);
-      const {mountGuide}=await import('./ai/assistant.js?v=28');
+      const {mountGuide}=await import('./ai/assistant.js?v=29');
       const site=await fetch('./site.json',{cache:'no-cache'}).then(r=>r.json());
       window.jmfsGuide=await mountGuide(window.jmfsGuideApi,site,enableGuide);
     } catch (error) {
